@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enum\RolesEnum;
+use App\Models\File;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -18,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $userRole = Role::create(['name' => RolesEnum::User->value]);
         $adminRole = Role::create(['name' => RolesEnum::Admin->value]);
 
-        User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@admin.com',
             'password' => bcrypt('password'),
@@ -29,5 +30,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@user.com',
             'password' => bcrypt('password'),
         ])->assignRole($userRole);
+
+        File::factory()->for($admin)->count(10)->create();
     }
 }

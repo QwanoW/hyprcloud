@@ -43,3 +43,16 @@ export interface User {
     updated_at: string;
     roles: RolesEnum[];
 }
+
+// TODO: change type
+export interface File {
+    name: string;
+    size: number;
+    type: string;
+    path: string;
+    user_id: number;
+    trash: boolean;
+    shared: boolean;
+    created_at: string;
+    updated_at: string;
+}
