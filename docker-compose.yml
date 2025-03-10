@@ -19,6 +19,8 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            # increase memory limit to 2GB
+            - './php.ini:/usr/local/etc/php/conf.d/php.ini'
         networks:
             - sail
         depends_on:

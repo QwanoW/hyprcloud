@@ -31,6 +31,6 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ])->assignRole($userRole);
 
-        File::factory()->for($admin)->count(10)->create();
+        File::factory()->for($admin)->count(100)->create();
     }
 }

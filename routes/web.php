@@ -10,12 +10,12 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('files', \App\Http\Controllers\FileController::class);
+    Route::resource('files', \App\Http\Controllers\FileController::class)->except([
+        'show',
+        'index',
+    ]);
 
-    Route::get('dashboard', function () {
-        $files = File::where('user_id', Auth::id())->get();
-        return Inertia::render("dashboard", compact('files'));
-    })->name('dashboard');
+    Route::get('dashboard', [\App\Http\Controllers\FileController::class, 'index'])->name('dashboard');
 
     Route::get('analytics', function () {
         return Inertia::render('analytics');

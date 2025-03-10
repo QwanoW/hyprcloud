@@ -1,31 +1,28 @@
 import { FileActions } from '@/components/file-manage/file-actions';
+import { PaginatedFilesTable } from '@/components/file-manage/file-data-table';
+import { columns } from '@/components/file-manage/file-data-table/columns';
 import { FileDropzone } from '@/components/file-manage/file-dropzone';
-import { FilesList } from '@/components/file-manage/files-list';
+import { Button } from '@/components/ui/button';
 import { toastFileRejections } from '@/lib/file-rejections-custom-errors';
-import { File as FileType } from '@/types';
-import { useForm } from '@inertiajs/react';
+import { File, Pagination } from '@/types';
+import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import { FileRejection } from 'react-dropzone';
 import { toast } from 'sonner';
 
 interface FilesProps {
     withActions: boolean;
-    files: FileType[];
+    files: File[];
+    filesPagination: Pagination<File[]>;
 }
 
-export function Files({ withActions, files }: FilesProps) {
-    const { setData, post } = useForm<{files: File[]}>({
-        'files': [],
-    });
+export function Files({ withActions, files, filesPagination }: FilesProps) {
+    const [showDropzone, setShowDropzone] = useState(Boolean(localStorage.getItem('showDropzone') ?? false));
 
-    // const fakeUploadFile = (_: File): Promise<string> => {
-    //     return new Promise((resolve) => {
-    //         setTimeout(() => {
-    //             resolve(
-    //                 'https://images.unsplash.com/photo-1511485977113-f34c92461ad9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    //             );
-    //         }, 1000);
-    //     });
-    // };
+    const handleShowDropzone = () => {
+        setShowDropzone(!showDropzone);
+        localStorage.setItem('showDropzone', JSON.stringify(showDropzone));
+    };
 
     const handleDrop = (acceptedFiles: File[], fileRejections: FileRejection[]) => {
         if (fileRejections.length > 0) {
@@ -36,36 +33,46 @@ export function Files({ withActions, files }: FilesProps) {
             toast.loading('Uploading files...', {
                 id: 'uploading',
             });
-            setData('files', acceptedFiles);
-            post(route('files.store'), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('Files uploaded successfully', {
-                        id: 'uploading',
-                    });
+            router.post(
+                `/files`,
+                {
+                    files: acceptedFiles,
                 },
-                onError: (errors) => {
-                    toast.error('Failed to upload files', {
-                        id: 'uploading',
-                        description: Object.entries(errors)[0][1],
-                    });
+                {
+                    preserveState: true,
+                    only: [],
+                    onSuccess: () => {
+                        toast.success('Files uploaded successfully', {
+                            id: 'uploading',
+                        });
+                        router.reload({
+                            only: ['files', 'filesPagination'],
+                            onBefore: (visit) => {
+                                visit.url.searchParams.append('fullLoad', 'true');
+                            },
+                        });
+                    },
+                    onError: (errors) => {
+                        toast.error('Failed to upload files', {
+                            id: 'uploading',
+                            description: Object.entries(errors)[0][1],
+                        });
+                    },
                 },
-
-                // showProgress: true,
-                // onProgress: (params) => {
-                //     console.log(params);
-                // }
-            });
+            );
         }
     };
 
     return (
-        <FileDropzone onDrop={handleDrop}>
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                {withActions && <FileActions onDelete={() => {}} onShare={() => {}} />}
-
-                <FilesList files={files} />
+        <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            {withActions && <FileActions onDelete={() => {}} onShare={() => {}} />}
+            <div>
+                <Button onClick={handleShowDropzone} variant="link">
+                    Show dropzone
+                </Button>
+                {showDropzone && <FileDropzone maxFiles={10} maxSize={100 * 1024 * 1024} onDrop={handleDrop} />}
             </div>
-        </FileDropzone>
+            <PaginatedFilesTable columns={columns} files={files} filesPagination={filesPagination} />
+        </div>
     );
 }

@@ -44,15 +44,45 @@ export interface User {
     roles: RolesEnum[];
 }
 
-// TODO: change type
+export enum FileType {
+    Image = 'image',
+    Video = 'video',
+    Audio = 'audio',
+    File = 'file',
+    Other = 'other',
+}
+
 export interface File {
+    id: number;
     name: string;
     size: number;
-    type: string;
+    type: FileType;
     path: string;
     user_id: number;
     trash: boolean;
     shared: boolean;
     created_at: string;
     updated_at: string;
+}
+
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface Pagination <TData> {
+    current_page: number;
+    data: TData;
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: PaginationLink[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
 }
