@@ -52,7 +52,8 @@ export enum FileType {
     Other = 'other',
 }
 
-export interface File {
+// changed name because conflicting with native File type
+export interface TFile {
     id: number;
     name: string;
     size: number;
@@ -71,9 +72,8 @@ export interface PaginationLink {
     active: boolean;
 }
 
-export interface Pagination <TData> {
+export interface Pagination {
     current_page: number;
-    data: TData;
     first_page_url: string;
     from: number;
     last_page: number;

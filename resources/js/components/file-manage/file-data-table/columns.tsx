@@ -7,7 +7,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { File, FileType } from '@/types';
+import { TFile, FileType } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import {
     File as FileIcon,
@@ -35,7 +35,7 @@ export function getFileIcon(fileType: FileType) {
 }
 
 // TODO: add languages
-export const columns: ColumnDef<File>[] = [
+export const columns: ColumnDef<TFile>[] = [
     {
         accessorKey: 'name',
         header: 'Name',

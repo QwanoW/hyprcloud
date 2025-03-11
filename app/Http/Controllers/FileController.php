@@ -6,6 +6,7 @@ use App\Models\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -18,15 +19,10 @@ class FileController extends Controller
 
         $query = File::query()->where('user_id', Auth::id());
 
-        // Apply any additional filters
-        if (request()->has('sort')) {
-            $query->orderBy(request()->input('sort'), request()->input('direction', 'desc'));
-        } else {
-            $query->latest();
-        }
+        $manualPartialLoad = request()->header('partial-load');
 
         // Handle full page load vs. infinite scroll request
-        if (!request()->header('X-Inertia') || request()->input('fullLoad')) {
+        if (!request()->header('X-Inertia') || !$manualPartialLoad) {
             // Full page load - fetch all pages up to current
             $allResults = collect();
 
@@ -35,8 +31,11 @@ class FileController extends Controller
                 $allResults = $allResults->concat($pageResults->items());
             }
 
+            $totalFiles = File::query()->where('user_id', Auth::id())->count();
+
             return new LengthAwarePaginator(
                 $allResults,
+                $totalFiles,
                 $perPage,
                 $currentPage
             );
@@ -50,7 +49,7 @@ class FileController extends Controller
         $files = $this->getPaginatedFiles();
         return Inertia::render('dashboard', [
             'files' => \inertia()->merge(fn() => $files->items()),
-            'filesPagination' => $files->toArray(),
+            'pagination' => Arr::except($files->toArray(), ['data']),
         ]);
     }
 
