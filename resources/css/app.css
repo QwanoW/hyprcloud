@@ -157,3 +157,8 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* active file selection */
+.active {
+    background-color: var(--color-muted);
+}

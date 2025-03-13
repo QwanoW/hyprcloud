@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\FileCollection;
+use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class FileController extends Controller
@@ -21,9 +24,7 @@ class FileController extends Controller
 
         $manualPartialLoad = request()->header('partial-load');
 
-        // Handle full page load vs. infinite scroll request
         if (!request()->header('X-Inertia') || !$manualPartialLoad) {
-            // Full page load - fetch all pages up to current
             $allResults = collect();
 
             for ($page = 1; $page <= $currentPage; $page++) {
@@ -48,7 +49,7 @@ class FileController extends Controller
     {
         $files = $this->getPaginatedFiles();
         return Inertia::render('dashboard', [
-            'files' => \inertia()->merge(fn() => $files->items()),
+            'files' => inertia()->merge(fn() => (new FileCollection($files))->collection),
             'pagination' => Arr::except($files->toArray(), ['data']),
         ]);
     }
@@ -80,12 +81,12 @@ class FileController extends Controller
                 }
             }
 
-            $path = $uploadedFile->store('uploads', 'public');
+            $path = $uploadedFile->store('files/' . $user->id, 's3');
 
-            \App\Models\File::create([
+            File::create([
                 'user_id' => $user->id,
                 'name' => $uploadedFile->getClientOriginalName(),
-                'type' => $fileType->value, // Значение enum, например 'image'
+                'type' => $fileType->value,
                 'size' => $uploadedFile->getSize(),
                 'path' => $path,
                 'trash' => false,
@@ -95,17 +96,6 @@ class FileController extends Controller
 
         return back();
     }
-
-//    public function show($id)
-//    {
-//        $file = File::findOrFail($id);
-//
-//        if ($file->user_id !== Auth::id()) {
-//            abort(403);
-//        }
-//
-//        return view('files.show', compact('file'));
-//    }
 
     public function update(Request $request, $id)
     {

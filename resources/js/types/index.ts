@@ -59,6 +59,7 @@ export interface TFile {
     size: number;
     type: FileType;
     path: string;
+    url: string;
     user_id: number;
     trash: boolean;
     shared: boolean;

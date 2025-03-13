@@ -4,9 +4,10 @@ export const FileIcon = ({ file }: { file: TFile }) => {
     if (file.type === FileType.Image) {
         return (
             <img
-                src={file.path}
+                src={file.url}
                 alt={file.name}
-                className="w-12 h-12 object-cover rounded"
+                draggable={false}
+                className="w-full aspect-square object-cover rounded"
             />
         );
     }
@@ -14,7 +15,7 @@ export const FileIcon = ({ file }: { file: TFile }) => {
         case FileType.Video:
             return (
                 <svg
-                    className="w-12 h-12 text-gray-500"
+                    className="w-full aspect-square text-gray-500"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -25,7 +26,7 @@ export const FileIcon = ({ file }: { file: TFile }) => {
         case FileType.Audio:
             return (
                 <svg
-                    className="w-12 h-12 text-gray-500"
+                    className="w-full aspect-square text-gray-500"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -35,7 +36,7 @@ export const FileIcon = ({ file }: { file: TFile }) => {
         default:
             return (
                 <svg
-                    className="w-12 h-12 text-gray-500"
+                    className="w-full aspect-square text-gray-500"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >

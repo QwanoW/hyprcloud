@@ -1,90 +1,42 @@
+import { memo, useCallback, useRef, useState } from 'react';
+import Selecto from 'react-selecto';
 import { FileItem } from '@/components/file-manage/file-item';
-import { Button } from '@/components/ui/button';
+import { ViewModeSwitcher } from '@/components/file-manage/view-mode-switcher';
+import { InfiniteScroll } from '@/components/infinite-scroll';
 import { cn } from '@/lib/utils';
 import { Pagination, TFile } from '@/types';
-import { useRef, useState, useCallback } from 'react';
-import Selecto from 'react-selecto';
-import { InfiniteScroll } from '@/components/infinite-scroll';
-
-// Улучшенный компонент переключения режима отображения
-const ViewModeSwitcher = ({
-                              viewMode,
-                              onViewModeChange,
-                          }: {
-    viewMode: 'list' | 'cards';
-    onViewModeChange: (mode: 'list' | 'cards') => void;
-}) => (
-    <div className="flex space-x-2">
-        <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            onClick={() => onViewModeChange('list')}
-        >
-            Список
-        </Button>
-        <Button
-            variant={viewMode === 'cards' ? 'default' : 'outline'}
-            onClick={() => onViewModeChange('cards')}
-        >
-            Карточки
-        </Button>
-    </div>
-);
 
 interface FileListProps {
     files: TFile[];
     pagination: Pagination;
+    handleSelect: (id: number, type: 'select' | 'unselect') => void;
 }
 
-// Основной компонент списка файлов с улучшенной структурой
-export function FilesList({ files, pagination }: FileListProps) {
+const FilesList = memo(({ files, pagination, handleSelect }: FileListProps) => {
     const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Кастомный хук для логики выделения файлов
-    const useFileSelection = () => {
-        const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-        const handleSelectEnd = useCallback((selectedElements: HTMLElement[]) => {
-            const newSelectedIds = new Set(
-                selectedElements.map((el) => el.getAttribute('data-id') || '')
-            );
-            setSelectedIds(newSelectedIds);
-        }, []);
-
-        return { selectedIds, handleSelectEnd };
-    };
-
-    const { selectedIds, handleSelectEnd: handleFileSelectEnd } = useFileSelection(files);
-
     const renderFiles = useCallback(() => {
         return files.map((file) => (
-            <div
+            <FileItem
+                variant={viewMode === 'list' ? 'row' : 'card'}
                 key={file.id}
-                className={cn(
-                    'selecto-item',
-                    selectedIds.has(String(file.id)) && 'bg-blue-100',
-                )}
-                data-id={file.id}
-            >
-                <FileItem file={file} isSelected={selectedIds.has(String(file.id))} />
-            </div>
+                className="selecto-item"
+                file={file}
+            />
         ));
-    }, [files, selectedIds]);
-
-    const handleSelectEnd = useCallback((e: any) => {
-        handleFileSelectEnd(e.selected);
-    }, [handleFileSelectEnd]);
+    }, [files, viewMode]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 h-full">
             <ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
 
             <div
                 ref={containerRef}
                 className={cn(
-                    'flex',
-                    viewMode === 'list' ? 'flex-col space-y-2' : 'grid gap-4',
-                    viewMode === 'cards' && 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]',
+                    viewMode === 'list'
+                        ? 'flex flex-col space-y-1'
+                        : 'grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4'
                 )}
             >
                 {renderFiles()}
@@ -98,9 +50,20 @@ export function FilesList({ files, pagination }: FileListProps) {
                     selectableTargets={['.selecto-item']}
                     toggleContinueSelect="ctrl"
                     hitRate={0}
-                    onSelectEnd={handleSelectEnd}
+                    onSelect={(e) => {
+                        e.added.forEach((el) => {
+                            el.classList.add('active');
+                            handleSelect(Number(el.dataset['id']), 'select');
+                        });
+                        e.removed.forEach((el) => {
+                            el.classList.remove('active');
+                            handleSelect(Number(el.dataset['id']), 'unselect');
+                        });
+                    }}
                 />
             )}
         </div>
     );
-}
+});
+
+export { FilesList };
