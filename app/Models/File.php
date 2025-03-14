@@ -27,7 +27,7 @@ class File extends Model
     protected static function booted(): void
     {
         static::deleting(function (File $file) {
-            Storage::delete($file->path);
+            Storage::disk('local')->delete($file->path);
         });
     }
 }

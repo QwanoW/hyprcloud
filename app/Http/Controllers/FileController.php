@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\FileTypeEnum;
 use App\Http\Resources\FileCollection;
-use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,12 +15,18 @@ use Inertia\Inertia;
 
 class FileController extends Controller
 {
-    protected function getPaginatedFiles(): ?LengthAwarePaginator
+    public static function getPaginatedFiles(array $options = []): ?LengthAwarePaginator
     {
+        $trash = $options['trash'] ?? false;
+        $image = $options['image'] ?? false;
+
         $currentPage = request()->input('page', 1);
         $perPage = request()->input('per_page', 10);
 
-        $query = File::query()->where('user_id', Auth::id());
+        $query = File::query()
+            ->where('user_id', Auth::id())
+            ->where('trash', $trash)
+            ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE));
 
         $manualPartialLoad = request()->header('partial-load');
 
@@ -32,7 +38,11 @@ class FileController extends Controller
                 $allResults = $allResults->concat($pageResults->items());
             }
 
-            $totalFiles = File::query()->where('user_id', Auth::id())->count();
+            $totalFiles = File::query()
+                ->where('user_id', Auth::id())
+                ->where('trash', $trash)
+                ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE))
+                ->count();
 
             return new LengthAwarePaginator(
                 $allResults,
@@ -54,6 +64,24 @@ class FileController extends Controller
         ]);
     }
 
+
+    public function show(Request $request, $filepath)
+    {
+        $pathUserId = (int)substr($filepath, 0, strrpos($filepath, '/'));
+        $userId = Auth::id();
+        if ($pathUserId !== $userId) {
+            abort(403);
+        }
+
+        $path = Storage::disk("local")->path($filepath);
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
+    }
+
+
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -66,8 +94,71 @@ class FileController extends Controller
         foreach ($request->file('files') as $uploadedFile) {
             $mimeType = $uploadedFile->getMimeType();
 
-            $fileType = \App\Enum\FileTypeEnum::OTHER;
+            $fileType = FileTypeEnum::OTHER;
 
+            if (str_starts_with($mimeType, 'image/')) {
+                $fileType = FileTypeEnum::IMAGE;
+            } elseif (str_starts_with($mimeType, 'video/')) {
+                $fileType = FileTypeEnum::VIDEO;
+            } elseif (str_starts_with($mimeType, 'audio/')) {
+                $fileType = FileTypeEnum::AUDIO;
+            } else {
+                $extension = strtolower($uploadedFile->getClientOriginalExtension());
+                if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'])) {
+                    $fileType = FileTypeEnum::FILE;
+                }
+            }
+
+            $path = $uploadedFile->store($user->id, 'local');
+
+            File::create([
+                'user_id' => $user->id,
+                'name' => $uploadedFile->getClientOriginalName(),
+                'type' => $fileType->value,
+                'size' => $uploadedFile->getSize(),
+                'path' => $path,
+            ]);
+        }
+
+        return back();
+    }
+
+    public function update(Request $request, $id): RedirectResponse
+    {
+        $file = File::findOrFail($id);
+
+        if ($file->user_id !== Auth::id()) {
+            abort(403, 'Доступ запрещен');
+        }
+
+        $rules = [
+            'name'   => 'sometimes|string|max:255',
+            'shared' => 'sometimes|boolean',
+            'trash'  => 'sometimes|boolean',
+            'file'   => 'sometimes|file|max:2097152',
+        ];
+
+        $validatedData = $request->validate($rules);
+
+        $updateData = [];
+
+        if (array_key_exists('name', $validatedData)) {
+            $updateData['name'] = $validatedData['name'];
+        }
+
+        if (array_key_exists('shared', $validatedData)) {
+            $updateData['shared'] = $validatedData['shared'];
+        }
+
+        if (array_key_exists('trash', $validatedData)) {
+            $updateData['trash'] = $validatedData['trash'];
+        }
+
+        if ($request->hasFile('file')) {
+            $uploadedFile = $request->file('file');
+            $mimeType = $uploadedFile->getMimeType();
+
+            $fileType = \App\Enum\FileTypeEnum::OTHER;
             if (str_starts_with($mimeType, 'image/')) {
                 $fileType = \App\Enum\FileTypeEnum::IMAGE;
             } elseif (str_starts_with($mimeType, 'video/')) {
@@ -81,42 +172,23 @@ class FileController extends Controller
                 }
             }
 
-            $path = $uploadedFile->store('files/' . $user->id, 's3');
+            $user = Auth::user();
+            $path = $uploadedFile->store($user->id, 'local');
 
-            File::create([
-                'user_id' => $user->id,
-                'name' => $uploadedFile->getClientOriginalName(),
-                'type' => $fileType->value,
-                'size' => $uploadedFile->getSize(),
-                'path' => $path,
-                'trash' => false,
-                'shared' => false,
-            ]);
+            $updateData['name'] = $uploadedFile->getClientOriginalName();
+            $updateData['type'] = $fileType->value;
+            $updateData['size'] = $uploadedFile->getSize();
+            $updateData['path'] = $path;
         }
 
-        return back();
+        $file->update($updateData);
+
+        return back()->with('success', 'Файл успешно обновлен');
     }
 
-    public function update(Request $request, $id)
-    {
-        $file = File::findOrFail($id);
 
-        if ($file->user_id !== Auth::id()) {
-            abort(403, 'Доступ запрещен');
-        }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'path' => 'required|string',
-        ]);
-
-        $file->update($request->only('name', 'path'));
-
-        return redirect()->route('files.index')
-            ->with('success', 'Файл успешно обновлен!');
-    }
-
-    public function destroy($id): RedirectResponse
+    public
+    function destroy($id): RedirectResponse
     {
         $file = File::findOrFail($id);
 
@@ -125,6 +197,99 @@ class FileController extends Controller
         }
 
         $file->delete();
+
+        return back();
+    }
+
+    public
+    function trashMultiple(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+
+        $fileForMovingToTrash = File::whereIn('id', $ids);
+
+        $ownedFilesCount = $fileForMovingToTrash
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($ownedFilesCount !== count($ids)) {
+            abort(403);
+        }
+
+        $fileForMovingToTrash->update(['trash' => true]);
+
+        return back();
+    }
+
+    public
+    function restore($id): RedirectResponse
+    {
+        $file = File::findOrFail($id);
+
+        if ($file->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $file->update(['trash' => false]);
+
+        return back();
+    }
+    public
+    function restoreMultiple(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+
+        $filesForRestore = File::whereIn('id', $ids);
+
+        $ownedFilesCount = $filesForRestore
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($ownedFilesCount !== count($ids)) {
+            abort(403);
+        }
+
+        $filesForRestore->update(['trash' => false]);
+
+        return back();
+    }
+
+    public
+    function destroyMultiple(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+
+        $filesForDeletion = File::whereIn('id', $ids);
+
+        $ownedFilesCount = $filesForDeletion
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($ownedFilesCount !== count($ids)) {
+            abort(403);
+        }
+
+        $filesForDeletion->each(function ($file) {
+            $file->delete();
+        });
 
         return back();
     }

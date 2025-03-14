@@ -4,13 +4,14 @@ import { ButtonGroup } from '@/components/ui/button-group';
 import { Grid3x3, TableOfContents } from 'lucide-react';
 
 type ViewModeSwitcherProps = {
+    className?: string;
     viewMode: 'list' | 'cards';
     onViewModeChange: (mode: 'list' | 'cards') => void;
 };
 
-export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitcherProps) {
+export function ViewModeSwitcher({ viewMode, onViewModeChange, className = '' }: ViewModeSwitcherProps) {
     return (
-        <ButtonGroup>
+        <ButtonGroup className={className}>
             <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
                 onClick={() => onViewModeChange('list')}

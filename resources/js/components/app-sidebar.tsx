@@ -13,14 +13,17 @@ const mainNavItems: NavItem[] = [
         title: 'All content',
         url: '/dashboard',
         icon: LayoutGrid,
+        only: ['files', 'pagination']
     },    {
-        title: 'Photos',
-        url: '/photos',
+        title: 'Gallery',
+        url: '/gallery',
         icon: Image,
+        only: ['files', 'pagination']
     },    {
         title: 'Trash',
         url: '/trash',
         icon: Trash,
+        only: ['files', 'pagination']
     },
     {
         title: 'Analytics',

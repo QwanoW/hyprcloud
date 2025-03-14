@@ -1,27 +1,62 @@
 import { Button } from '@/components/ui/button';
-import { Delete, Share } from 'lucide-react';
+import { Share, Trash } from 'lucide-react';
+import React from 'react';
+import { FileDeleteDialog } from '@/components/file-manage/file-delete-dialog';
 
 interface FilesActionsProps {
-    onDelete: () => void;
-    onShare: () => void;
-    onOpenFileDialog: () => void;
+    variant: 'default' | 'trash'
+    disableActions?: boolean;
+
+    // default
+    onDelete?: () => void;
+    onShare?: () => void;
+    onOpenFileDialog?: () => void;
+
+    // trash variant
+    onRestore?: () => void;
+    onDeletePermanently?: () => void;
 }
 
-export function FileActions({ onDelete, onShare, onOpenFileDialog }: FilesActionsProps) {
-    return (
-        <div className="flex items-center gap-4">
-            <Button variant="destructive" className="gap-2">
-                <Delete className="h-4 w-4" onClick={onDelete} />
-                Delete
-            </Button>
-            <Button onClick={onShare} variant="outline" className="gap-2">
-                <Share className="h-4 w-4" />
-                Share
-            </Button>
-            <Button onClick={onOpenFileDialog} variant="secondary" className="gap-2">
-                <Share className="h-4 w-4" />
-                Upload
-            </Button>
-        </div>
-    );
+// function areEqual(prevProps: FilesActionsProps, nextProps: FilesActionsProps) {
+//     return prevProps.disableActions === nextProps.disableActions;
+// }
+
+export function FileActions({ variant, disableActions = false, onDelete, onShare, onOpenFileDialog, onRestore, onDeletePermanently }: FilesActionsProps) {
+    if (variant === 'default') {
+        return (
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Button disabled={disableActions} onClick={onDelete} variant="destructive" className="gap-2">
+                        <Trash className="h-4 w-4" />
+                        Trash
+                    </Button>
+                    <Button disabled={disableActions} onClick={onShare} variant="outline" className="gap-2">
+                        <Share className="h-4 w-4" />
+                        Share
+                    </Button>
+                </div>
+                <Button onClick={onOpenFileDialog} variant="secondary" className="gap-2">
+                    <Share className="h-4 w-4" />
+                    Upload
+                </Button>
+            </div>
+        );
+    } else if (variant === 'trash') {
+        return (
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <FileDeleteDialog onConfirm={onDeletePermanently} >
+                        <Button disabled={disableActions} variant="destructive" className="gap-2">
+                            <Trash className="h-4 w-4" />
+                            Delete permanently
+                        </Button>
+                    </FileDeleteDialog>
+                    <Button disabled={disableActions} onClick={onRestore} variant="outline" className="gap-2">
+                        <Share className="h-4 w-4" />
+                        Restore
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 }

@@ -23,7 +23,7 @@ class FileResource extends JsonResource
             'size' => $this->size,
             'type' => $this->type,
             'path' => $this->path,
-            'url' => Storage::disk('s3')->url($this->path),
+            'url' => route('files.show', ['filepath' => $this->path]),
             'user_id' => $this->user_id,
             'trash' => $this->trash,
             'shared' => $this->shared,

@@ -1,21 +1,23 @@
 import { FileActions } from '@/components/file-manage/file-actions';
-import { PaginatedFilesTable } from '@/components/file-manage/file-data-table';
-import { columns } from '@/components/file-manage/file-data-table/columns';
 import { FileDropzone } from '@/components/file-manage/file-dropzone';
+import { FilesList } from '@/components/file-manage/file-list';
+import { useFileActions } from '@/hooks/file-manage/use-file-actions';
+import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
 import { useFileUpload } from '@/hooks/file-manage/use-file-upload';
 import { Pagination, TFile } from '@/types';
-import { useRef } from 'react';
-import { FilesList } from '@/components/file-manage/file-list';
-import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
+import { useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 
 interface FilesProps {
-    withActions: boolean;
+    variant?: 'default' | 'trash';
+    withActions?: boolean;
     files: TFile[];
     pagination: Pagination;
 }
 
-export function Files({ withActions, files, pagination }: FilesProps) {
+export function Files({ variant = 'default', withActions = false, files, pagination }: FilesProps) {
     const { upload } = useFileUpload();
+    const { trash, destroy, restore, update } = useFileActions();
     const { selectedIds, handleSelect } = useFileSelection();
 
     const openFileDialogRef = useRef<() => void>(null);
@@ -25,14 +27,48 @@ export function Files({ withActions, files, pagination }: FilesProps) {
         }
     };
 
+    const handleShare = useCallback(() => {
+        if (selectedIds.length !== 1) {
+            toast.error('You can only choose 1 file to share');
+            return;
+        }
+
+        const isAlreadyShared = files.find(f => f.id === selectedIds[0])!.shared
+        if (isAlreadyShared) {
+            toast.error('File is already shared', {
+                duration: 5000,
+                action: {
+                    label: 'Undo share',
+                    onClick: () => {
+                        update(selectedIds[0], { shared: false });
+                    }
+                }
+            })
+            return;
+        }
+        update(selectedIds[0], { shared: true });
+    }, [files, selectedIds, update])
+
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <pre>
-                {JSON.stringify(selectedIds)}
-            </pre>
-            {withActions && <FileActions onDelete={() => {}} onShare={() => {}} onOpenFileDialog={onOpenFileDialog} />}
+            {withActions && (
+                <FileActions
+                    variant={variant}
+                    disableActions={selectedIds.length === 0}
+                    onRestore={() => {
+                        restore(selectedIds);
+                    }}
+                    onDeletePermanently={() => {
+                        destroy(selectedIds);
+                    }}
+                    onDelete={() => {
+                        trash(selectedIds);
+                    }}
+                    onShare={handleShare}
+                    onOpenFileDialog={onOpenFileDialog}
+                />
+            )}
             <FileDropzone openFileDialogRef={openFileDialogRef} onDrop={upload} maxFiles={10} maxSize={100 * 1024 * 1024}>
-                {/*<PaginatedFilesTable columns={columns} files={files} pagination={pagination} />*/}
                 <FilesList handleSelect={handleSelect} pagination={pagination} files={files} />
             </FileDropzone>
         </div>

@@ -5,16 +5,16 @@ import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Dashboard',
-        href: '/dashboard',
+        title: 'Trash',
+        href: '/trash',
     },
 ];
 
-export default function Dashboard({ files, pagination }: { files: TFile[], pagination: Pagination }) {
+export default function Trash({ files, pagination }: { files: TFile[], pagination: Pagination }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
-            <Files withActions files={files} pagination={pagination} />
+            <Head title="Trash" />
+            <Files withActions variant="trash" files={files} pagination={pagination} />
         </AppLayout>
     );
 }

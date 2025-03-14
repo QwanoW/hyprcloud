@@ -28,13 +28,13 @@ export const FileItem = React.memo(({ file, className, variant }: FileItemProps)
     return (
         <Card data-id={file.id} className={'hover:bg-muted border-none px-2 py-1 shadow-none transition-colors ' + className}>
             <CardContent className="flex w-full p-0">
-                <div className="flex w-2/3 items-center gap-4 pr-6">
+                <div className="flex w-1/2 lg:w-2/3 items-center gap-4 pr-6">
                     <div className="w-12 h-12">
                         <FileIcon file={file} />
                     </div>
                     <CardTitle className="truncate text-center font-mono text-sm">{file.name}</CardTitle>
                 </div>
-                <div className="flex w-1/3 items-center justify-between">
+                <div className="flex w-1/2 lg:w-1/3 items-center justify-between">
                     <p className="text-muted-foreground text-center text-sm">{updatedAt.toDateString()}</p>
                     <p className="text-muted-foreground text-center text-sm">{updatedAt.toLocaleTimeString()}</p>
                     <p className="text-muted-foreground text-center text-sm">{formatFileSize(file.size)}</p>

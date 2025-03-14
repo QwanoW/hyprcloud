@@ -35,10 +35,10 @@ export function FileDropzone({ onDrop, maxFiles, maxSize, children, openFileDial
                 data-is-drag-active={isDragActive}
                 className="pointer-events-none fixed inset-0 z-30 flex flex-col items-center justify-center text-white opacity-0 backdrop-blur-sm transition-opacity duration-300 ease-in-out data-[is-drag-active=true]:opacity-90"
             >
-                <svg className="mb-4 h-12 w-12 animate-bounce text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className="mb-4 h-12 w-12 animate-bounce text-accent-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
                 </svg>
-                <p className="text-lg font-semibold">Drag and drop your files here</p>
+                <p className="text-lg font-semibold text-accent-foreground">Drag and drop your files here</p>
             </div>
         </div>
     );
