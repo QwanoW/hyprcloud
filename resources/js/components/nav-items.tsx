@@ -11,7 +11,7 @@ export function NavItems({ items = [], label }: { items: NavItem[], label: strin
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild isActive={item.url === page.url}>
-                            <Link href={item.url} cacheFor={0} only={item.only}>
+                            <Link href={item.url} cacheFor={0} only={item.url !== page.url ? item.only : undefined}>
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>
                             </Link>

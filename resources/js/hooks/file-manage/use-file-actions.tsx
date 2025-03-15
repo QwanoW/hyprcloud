@@ -1,9 +1,9 @@
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 
-type FileUpdateOptions = {
-    onSuccess?: () => void;
-};
+// type FileUpdateOptions = {
+//     onSuccess?: () => void;
+// };
 
 export function useFileActions() {
     const destroy = (ids: number[]) => {
@@ -74,7 +74,7 @@ export function useFileActions() {
         );
     };
 
-    const update = (id: number, data: { name?: string; trash?: boolean; shared?: boolean }, options?: FileUpdateOptions) => {
+    const update = (id: number, data: { name?: string; trash?: boolean; shared?: boolean }) => {
         toast.loading('Updating file...', {
             id: 'update',
         });

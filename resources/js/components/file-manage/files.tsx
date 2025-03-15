@@ -33,7 +33,7 @@ export function Files({ variant = 'default', withActions = false, files, paginat
             return;
         }
 
-        const isAlreadyShared = files.find(f => f.id === selectedIds[0])!.shared
+        const isAlreadyShared = files.find((f) => f.id === selectedIds[0])!.shared;
         if (isAlreadyShared) {
             toast.error('File is already shared', {
                 duration: 5000,
@@ -41,13 +41,13 @@ export function Files({ variant = 'default', withActions = false, files, paginat
                     label: 'Undo share',
                     onClick: () => {
                         update(selectedIds[0], { shared: false });
-                    }
-                }
-            })
+                    },
+                },
+            });
             return;
         }
         update(selectedIds[0], { shared: true });
-    }, [files, selectedIds, update])
+    }, [files, selectedIds, update]);
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
