@@ -24,7 +24,7 @@ export interface NavItem {
 
 export interface SharedData {
     name: string;
-    quote: { message: string; author: string };
+    csrf_token: string;
     auth: Auth;
     [key: string]: unknown;
 }
@@ -32,6 +32,12 @@ export interface SharedData {
 export enum RolesEnum {
     Admin = 'admin',
     User = 'user',
+}
+
+export enum PlansEnum {
+    Free = 'free',
+    Basic = 'basic',
+    Pro = 'pro'
 }
 
 export interface User {
@@ -43,6 +49,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     roles: RolesEnum[];
+    plan: Omit<Plan, 'features'>;
 }
 
 export enum FileType {
@@ -87,4 +94,43 @@ export interface Pagination {
     prev_page_url: string | null;
     to: number;
     total: number;
+}
+
+export interface Payment {
+    id: number;
+    user_id: number;
+    plan_id: number;
+    payment_method: 'card' | 'sbp';
+    billing_cycle: 'monthly' | 'yearly';
+    status: 'pending' | 'paid';
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Plan {
+    id: number;
+    en_name: string;
+    ru_name: string;
+    en_description: string;
+    ru_description: string;
+    icon: string;
+    monthly_usd_price: number;
+    monthly_rub_price: number;
+    yearly_usd_price: number;
+    yearly_rub_price: number;
+    popular: boolean;
+    features: PlanFeature[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PlanFeature {
+    id: number;
+    ru_name: string;
+    en_name: string;
+    popular: boolean;
+    included: boolean
+    group: string;
+    created_at: string;
+    updated_at: string;
 }

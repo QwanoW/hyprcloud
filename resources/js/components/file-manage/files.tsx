@@ -1,12 +1,14 @@
 import { FileActions } from '@/components/file-manage/file-actions';
 import { FileDropzone } from '@/components/file-manage/file-dropzone';
 import { FilesList } from '@/components/file-manage/file-list';
+import { useFileActionMenu } from '@/hooks/file-manage/use-file-action-menu';
 import { useFileActions } from '@/hooks/file-manage/use-file-actions';
 import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
 import { useFileUpload } from '@/hooks/file-manage/use-file-upload';
 import { Pagination, TFile } from '@/types';
 import { useCallback, useRef } from 'react';
-import { toast } from 'sonner';
+import { ActionMenu } from '@/components/file-manage/file-action-menu';
+import { useOutsideClick } from '@/hooks/use-outside-click';
 
 interface FilesProps {
     variant?: 'default' | 'trash';
@@ -17,8 +19,17 @@ interface FilesProps {
 
 export function Files({ variant = 'default', withActions = false, files, pagination }: FilesProps) {
     const { upload } = useFileUpload();
-    const { trash, destroy, restore, update } = useFileActions();
+    const {share, cancelShare, restore, destroy, trash} = useFileActions();
     const { selectedIds, handleSelect } = useFileSelection();
+
+    const disableActions = selectedIds.length === 0;
+    const disableMultipleAction = selectedIds.length !== 1;
+    const isAlreadyShared = Boolean(files.find((f) => f.id === selectedIds[0])?.shared);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const actionMenuRef = useRef<HTMLDivElement>(null);
+    const { actionMenuOpen, setActionMenuOpen, actionMenuPos } = useFileActionMenu(containerRef);
+    useOutsideClick(actionMenuRef, () => setActionMenuOpen(false));
 
     const openFileDialogRef = useRef<() => void>(null);
     const onOpenFileDialog = () => {
@@ -27,50 +38,53 @@ export function Files({ variant = 'default', withActions = false, files, paginat
         }
     };
 
-    const handleShare = useCallback(() => {
-        if (selectedIds.length !== 1) {
-            toast.error('You can only choose 1 file to share');
-            return;
+    const onAction = useCallback((action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently') => {
+        if (action === 'show') {
+            if (!disableMultipleAction) {
+                const file = files.find((f) => f.id === selectedIds[0]);
+                if (file) {
+                    window.open(file.url, '_blank');
+                }
+            }
+        } else if (action === 'share') {
+            share(selectedIds[0]);
         }
-
-        const isAlreadyShared = files.find((f) => f.id === selectedIds[0])!.shared;
-        if (isAlreadyShared) {
-            toast.error('File is already shared', {
-                duration: 5000,
-                action: {
-                    label: 'Undo share',
-                    onClick: () => {
-                        update(selectedIds[0], { shared: false });
-                    },
-                },
-            });
-            return;
+         else if (action === 'cancel-share') {
+            cancelShare(selectedIds[0]);
+        } else if (action === 'restore') {
+            restore(selectedIds);
+        } else if (action === 'delete') {
+            trash(selectedIds);
+        } else if (action === 'delete-permanently') {
+            destroy(selectedIds);
         }
-        update(selectedIds[0], { shared: true });
-    }, [files, selectedIds, update]);
+    }, [share, cancelShare, restore, destroy, trash, selectedIds]);
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             {withActions && (
                 <FileActions
                     variant={variant}
-                    disableActions={selectedIds.length === 0}
-                    onRestore={() => {
-                        restore(selectedIds);
-                    }}
-                    onDeletePermanently={() => {
-                        destroy(selectedIds);
-                    }}
-                    onDelete={() => {
-                        trash(selectedIds);
-                    }}
-                    onShare={handleShare}
+                    disableActions={disableActions}
+                    disableMultipleAction={disableMultipleAction}
+                    isAlreadyShared={isAlreadyShared}
+                    onAction={onAction}
                     onOpenFileDialog={onOpenFileDialog}
                 />
             )}
-            <FileDropzone openFileDialogRef={openFileDialogRef} onDrop={upload} maxFiles={10} maxSize={100 * 1024 * 1024}>
-                <FilesList handleSelect={handleSelect} pagination={pagination} files={files} />
+            <FileDropzone openFileDialogRef={openFileDialogRef} onDrop={(acceptedFiles, fileRejections) => upload(acceptedFiles, fileRejections, files)} maxFiles={10} maxSize={100 * 1024 * 1024}>
+                <FilesList
+                    handleSelect={handleSelect}
+                    pagination={pagination}
+                    files={files}
+                    containerRef={containerRef}
+                />
             </FileDropzone>
+            {actionMenuOpen && (
+                <div ref={actionMenuRef}>
+                    <ActionMenu pos={actionMenuPos} variant={variant} disableMultipleAction={disableMultipleAction} isAlreadyShared={isAlreadyShared} onAction={onAction} onClose={() => setActionMenuOpen(false)} />
+                </div>
+            )}
         </div>
     );
 }

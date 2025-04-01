@@ -25,7 +25,7 @@ class FileController extends Controller
 
         $query = File::query()
             ->where('user_id', Auth::id())
-            ->where('trash', $trash)
+            ->when($trash, fn($q) => $q->onlyTrashed())
             ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE));
 
         $manualPartialLoad = request()->header('partial-load');
@@ -40,7 +40,7 @@ class FileController extends Controller
 
             $totalFiles = File::query()
                 ->where('user_id', Auth::id())
-                ->where('trash', $trash)
+                ->when($trash, fn($q) => $q->onlyTrashed())
                 ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE))
                 ->count();
 
@@ -183,9 +183,8 @@ class FileController extends Controller
 
         $file->update($updateData);
 
-        return back()->with('success', 'Файл успешно обновлен');
+        return back();
     }
-
 
     public
     function destroy($id): RedirectResponse
@@ -197,71 +196,6 @@ class FileController extends Controller
         }
 
         $file->delete();
-
-        return back();
-    }
-
-    public
-    function trashMultiple(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer',
-        ]);
-
-        $ids = $validated['ids'];
-        $userId = Auth::id();
-
-        $fileForMovingToTrash = File::whereIn('id', $ids);
-
-        $ownedFilesCount = $fileForMovingToTrash
-            ->where('user_id', $userId)
-            ->count();
-
-        if ($ownedFilesCount !== count($ids)) {
-            abort(403);
-        }
-
-        $fileForMovingToTrash->update(['trash' => true]);
-
-        return back();
-    }
-
-    public
-    function restore($id): RedirectResponse
-    {
-        $file = File::findOrFail($id);
-
-        if ($file->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $file->update(['trash' => false]);
-
-        return back();
-    }
-    public
-    function restoreMultiple(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer',
-        ]);
-
-        $ids = $validated['ids'];
-        $userId = Auth::id();
-
-        $filesForRestore = File::whereIn('id', $ids);
-
-        $ownedFilesCount = $filesForRestore
-            ->where('user_id', $userId)
-            ->count();
-
-        if ($ownedFilesCount !== count($ids)) {
-            abort(403);
-        }
-
-        $filesForRestore->update(['trash' => false]);
 
         return back();
     }
@@ -287,8 +221,75 @@ class FileController extends Controller
             abort(403);
         }
 
-        $filesForDeletion->each(function ($file) {
-            $file->delete();
+        $filesForDeletion->delete();
+
+        return back();
+    }
+
+    public
+    function destroyPermanentlyMultiple(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+
+        $fileForMovingToTrash = File::withTrashed()->whereIn('id', $ids);
+
+        $ownedFilesCount = $fileForMovingToTrash
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($ownedFilesCount !== count($ids)) {
+            abort(403);
+        }
+
+        $fileForMovingToTrash->each(function (File $file) {
+            $file->forceDelete();
+        });
+
+        return back();
+    }
+
+    public
+    function restore($id): RedirectResponse
+    {
+        $file = File::findOrFail($id);
+
+        if ($file->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $file->restore();
+
+        return back();
+    }
+    public
+    function restoreMultiple(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+
+        $filesForRestore = File::withTrashed()->whereIn('id', $ids);
+
+        $ownedFilesCount = $filesForRestore
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($ownedFilesCount !== count($ids)) {
+            abort(403);
+        }
+
+        $filesForRestore->each(function (File $file) {
+            $file->restore();
         });
 
         return back();

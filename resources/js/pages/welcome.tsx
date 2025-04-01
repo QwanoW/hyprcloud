@@ -146,11 +146,11 @@ export default function Welcome() {
                         </p>
 
                         <div className="relative z-10 mt-10 flex flex-col gap-4 sm:flex-row">
-                            <Button size="lg" className="text-base">
-                                Get Started Free
+                            <Button asChild size="lg" className="text-base">
+                                <Link href="dashboard">Try it free</Link>
                             </Button>
                             <Button size="lg" variant="outline" className="text-base">
-                                Learn More
+                                <Link href="#features">Learn more</Link>
                             </Button>
                         </div>
 
@@ -345,7 +345,40 @@ export default function Welcome() {
                         </div>
 
                         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
-                            <Card>
+                            <Card className="flex flex-col justify-between">
+                                <CardHeader>
+                                    <CardTitle>Free</CardTitle>
+                                    <div className="mt-4">
+                                        <span className="text-4xl font-bold">$0</span>
+                                        <span className="text-muted-foreground ml-1">/month</span>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <ul className="space-y-2">
+                                        <li className="flex items-center gap-2">
+                                            <Check className="text-primary h-5 w-5" />
+                                            <span>2GB storage</span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="text-primary h-5 w-5" />
+                                            <span>5MB file upload speed</span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="text-primary h-5 w-5" />
+                                            <span>Basic sharing</span>
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="text-primary h-5 w-5" />
+                                            <span>Community support</span>
+                                        </li>
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button className="w-full">Get Started</Button>
+                                </CardFooter>
+                            </Card>
+
+                            <Card className="flex flex-col justify-between">
                                 <CardHeader>
                                     <CardTitle>Basic</CardTitle>
                                     <div className="mt-4">
@@ -361,11 +394,11 @@ export default function Welcome() {
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
-                                            <span>10GB file upload limit</span>
+                                            <span>15MB file upload speed</span>
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
-                                            <span>Basic sharing features</span>
+                                            <span>Standard sharing</span>
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
@@ -378,12 +411,9 @@ export default function Welcome() {
                                 </CardFooter>
                             </Card>
 
-                            <Card className="border-primary">
+                            <Card className="flex flex-col justify-between">
                                 <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle>Pro</CardTitle>
-                                        <span className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs font-medium">Popular</span>
-                                    </div>
+                                    <CardTitle>Pro</CardTitle>
                                     <div className="mt-4">
                                         <span className="text-4xl font-bold">$19</span>
                                         <span className="text-muted-foreground ml-1">/month</span>
@@ -397,11 +427,11 @@ export default function Welcome() {
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
-                                            <span>50GB file upload limit</span>
+                                            <span>50MB file upload speed</span>
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
-                                            <span>Advanced sharing & permissions</span>
+                                            <span>Advanced sharing</span>
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
@@ -409,7 +439,7 @@ export default function Welcome() {
                                         </li>
                                         <li className="flex items-center gap-2">
                                             <Check className="text-primary h-5 w-5" />
-                                            <span>File versioning</span>
+                                            <span>Custom integrations</span>
                                         </li>
                                     </ul>
                                 </CardContent>
@@ -418,46 +448,6 @@ export default function Welcome() {
                                 </CardFooter>
                             </Card>
 
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Enterprise</CardTitle>
-                                    <div className="mt-4">
-                                        <span className="text-4xl font-bold">$49</span>
-                                        <span className="text-muted-foreground ml-1">/month</span>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-2">
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>5TB storage</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>Unlimited file upload size</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>Advanced security controls</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>24/7 dedicated support</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>Custom integration options</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="text-primary h-5 w-5" />
-                                            <span>Admin dashboard</span>
-                                        </li>
-                                    </ul>
-                                </CardContent>
-                                <CardFooter>
-                                    <Button className="w-full">Contact Sales</Button>
-                                </CardFooter>
-                            </Card>
                         </div>
                     </div>
                 </section>
@@ -468,14 +458,11 @@ export default function Welcome() {
                         <div className="bg-primary/5 mx-auto max-w-4xl rounded-2xl p-8 text-center md:p-12">
                             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Ready to Get Started?</h2>
                             <p className="text-muted-foreground mx-auto mt-4 max-w-[600px] text-xl">
-                                Join thousands of satisfied customers who trust Hyprcloud with their important files. Try it free for 14 days.
+                                Join thousands of satisfied customers who trust Hyprcloud with their important files.
                             </p>
                             <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
                                 <Button size="lg" className="text-base">
-                                    Start Your Free Trial
-                                </Button>
-                                <Button size="lg" variant="outline" className="text-base">
-                                    Schedule a Demo
+                                    Start for free
                                 </Button>
                             </div>
                         </div>

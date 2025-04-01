@@ -4,10 +4,10 @@ export const useFileSelection = () => {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     const handleSelect = useCallback((id: number, type: 'select' | 'unselect') => {
-        if (type === "select") {
-            setSelectedIds((prev) => [...prev, id]);
+        if (type === 'select') {
+            setSelectedIds(prev => [...prev, id]);
         } else {
-            setSelectedIds((prev) => prev.filter((_id) => _id !== id));
+            setSelectedIds(prev => prev.filter(_id => _id !== id));
         }
     }, []);
 

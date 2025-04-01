@@ -18,9 +18,9 @@ return new class extends Migration
             $table->integer('size');
             $table->string('path');
             $table->foreignIdFor(\App\Models\User::class)->constrained()->cascadeOnDelete();
-            $table->boolean('trash')->default(false);
             $table->boolean('shared')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

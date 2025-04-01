@@ -6,12 +6,14 @@ use App\Enum\FileTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 class File extends Model
 {
     /** @use HasFactory<\Database\Factories\FileFactory> */
     use HasFactory;
+    use SoftDeletes;
 
     protected $guarded = [];
 
@@ -26,7 +28,7 @@ class File extends Model
 
     protected static function booted(): void
     {
-        static::deleting(function (File $file) {
+        static::forceDeleting(function (File $file) {
             Storage::disk('local')->delete($file->path);
         });
     }
