@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enum\FileTypeEnum;
-use App\Http\Resources\FileCollection;
+use App\Services\ActivityLoggerService;
+use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use ZipArchive;
 
 class FileController extends Controller
 {
@@ -111,13 +113,19 @@ class FileController extends Controller
 
             $path = $uploadedFile->store($user->id, 'local');
 
-            File::create([
+            $file = File::create([
                 'user_id' => $user->id,
                 'name' => $uploadedFile->getClientOriginalName(),
                 'type' => $fileType->value,
                 'size' => $uploadedFile->getSize(),
                 'path' => $path,
             ]);
+
+            ActivityLoggerService::logFileUpload(
+                $file->id,
+                $file->name,
+                $file->size
+            );
         }
 
         return back();
@@ -195,6 +203,12 @@ class FileController extends Controller
             abort(403);
         }
 
+        ActivityLoggerService::logFileDelete(
+            $file->id,
+            $file->name,
+            $file->size
+        );
+
         $file->delete();
 
         return back();
@@ -219,6 +233,15 @@ class FileController extends Controller
 
         if ($ownedFilesCount !== count($ids)) {
             abort(403);
+        }
+
+        $files = File::whereIn('id', $ids)->get();
+        foreach ($files as $file) {
+            ActivityLoggerService::logFileDelete(
+                $file->id,
+                $file->name,
+                $file->size
+            );
         }
 
         $filesForDeletion->delete();
@@ -248,6 +271,12 @@ class FileController extends Controller
         }
 
         $fileForMovingToTrash->each(function (File $file) {
+            ActivityLoggerService::logFileDelete(
+                $file->id,
+                $file->name,
+                $file->size,
+                true
+            );
             $file->forceDelete();
         });
 
@@ -262,6 +291,12 @@ class FileController extends Controller
         if ($file->user_id !== Auth::id()) {
             abort(403);
         }
+
+        ActivityLoggerService::logFileRestore(
+            $file->id,
+            $file->name,
+            $file->size
+        );
 
         $file->restore();
 
@@ -289,9 +324,89 @@ class FileController extends Controller
         }
 
         $filesForRestore->each(function (File $file) {
+            ActivityLoggerService::logFileRestore(
+                $file->id,
+                $file->name,
+                $file->size
+            );
             $file->restore();
         });
 
         return back();
+    }
+
+    public function downloadZip(Request $request)
+    {
+        if (session()->has('last_zip_file')) {
+            $previousZipFile = session('last_zip_file');
+            $prevZipPath = storage_path("app/public/{$previousZipFile}");
+            if (file_exists($prevZipPath)) {
+                unlink($prevZipPath);
+            }
+            session()->forget('last_zip_file');
+        }
+    
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+    
+        $ids = $validated['ids'];
+        $userId = Auth::id();
+    
+        $files = File::whereIn('id', $ids)->where('user_id', $userId)->get();
+        
+        if ($files->isEmpty()) {
+            return response()->json(['error' => 'Файлы не найдены'], 404);
+        }
+    
+        $zipFileName = "files_" . time() . ".zip";
+        $zipPath = storage_path("app/public/{$zipFileName}");
+    
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['error' => 'Не удалось создать архив'], 500);
+        }
+    
+        foreach ($files as $file) {
+            $filePath = storage_path("app/private/" . $file->path);
+            if (file_exists($filePath)) {
+                $zip->addFile($filePath, $file->name);
+            }
+        }
+        
+        $zip->close();
+        
+        $zipSize = filesize($zipPath);
+
+        ActivityLoggerService::logZipDownload($ids, $zipSize);
+    
+        session(['last_zip_file' => $zipFileName]);
+    
+        $downloadUrl = asset("storage/{$zipFileName}");
+    
+        return response()->json([
+            'download_url' => $downloadUrl
+        ]);
+    }
+    
+    public function search(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'required|string',
+        ]);
+
+        $query = $validated['q'];
+        $userId = Auth::id();
+
+        $files = File::query()
+            ->where('user_id', $userId)
+            ->where('name', 'like', '%' . $query . '%')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'files' => FileResource::collection($files),
+        ]);
     }
 }

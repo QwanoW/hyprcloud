@@ -21,6 +21,7 @@ function performAction(loadingMsg: string, routeName: string, payload: RequestPa
         },
     });
 }
+
 export function useFileActions() {
     const destroy = (ids: number[]) => performAction('Deleting...', 'files.destroyPermanentlyMultiple', { ids }, 'Successfully deleted');
     const trash = (ids: number[]) => performAction('Moving to trash...', 'files.destroyMultiple', { ids }, 'Successfully moved to trash');

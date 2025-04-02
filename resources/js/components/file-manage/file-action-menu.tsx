@@ -6,7 +6,7 @@ interface ActionMenuProps {
     variant: 'default' | 'trash';
     isAlreadyShared?: boolean;
     disableMultipleAction?: boolean;
-    onAction: (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently') => void;
+    onAction: (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => void;
     onClose: () => void;
 }
 
@@ -30,6 +30,9 @@ export const ActionMenu = ({ pos, variant, isAlreadyShared = false, disableMulti
                         )}
                         <Button variant="ghost" onClick={() => onAction('delete')}>
                             Delete
+                        </Button>
+                        <Button variant="ghost" onClick={() => onAction('download-zip')}>
+                            Download zip
                         </Button>
                     </CardContent>
                 </Card>

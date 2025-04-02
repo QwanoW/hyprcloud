@@ -9,6 +9,8 @@ import { Pagination, TFile } from '@/types';
 import { useCallback, useRef } from 'react';
 import { ActionMenu } from '@/components/file-manage/file-action-menu';
 import { useOutsideClick } from '@/hooks/use-outside-click';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface FilesProps {
     variant?: 'default' | 'trash';
@@ -38,7 +40,7 @@ export function Files({ variant = 'default', withActions = false, files, paginat
         }
     };
 
-    const onAction = useCallback((action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently') => {
+    const onAction = useCallback(async (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => {
         if (action === 'show') {
             if (!disableMultipleAction) {
                 const file = files.find((f) => f.id === selectedIds[0]);
@@ -57,6 +59,15 @@ export function Files({ variant = 'default', withActions = false, files, paginat
             trash(selectedIds);
         } else if (action === 'delete-permanently') {
             destroy(selectedIds);
+        } else if (action === 'download-zip') {
+            try {
+                toast.loading('Creating zip archive', { id: 'download-zip' });
+                const response = await axios.post<{ download_url: string }>(route('files.downloadZip', { ids: selectedIds }));
+                window.open(response.data.download_url, '_blank');
+                toast.success('Zip archive created successfully', { id: 'download-zip' });
+            } catch (error) {
+                toast.error('Failed to create zip archive', { id: 'download-zip' });
+            }
         }
     }, [share, cancelShare, restore, destroy, trash, selectedIds]);
 

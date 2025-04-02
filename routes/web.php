@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
@@ -20,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('files/restore-multiple', [FileController::class, 'restoreMultiple'])->name('files.restoreMultiple');
     Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
 
+    // api routes
+    Route::post('files/download-zip', [FileController::class, 'downloadZip'])->name('files.downloadZip');
+    Route::post('files/search', [FileController::class, 'search'])->name('files.search');
+
     Route::controller(PlanController::class)->group(function () {
         Route::get('manage-plan', 'index')->name('manage-plan.index');
     });
@@ -27,7 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::controller(PaymentController::class)->group(function () {
         Route::get('/payment', 'index')->name('payment.index');
         Route::post('/mock-payment', 'processPayment');
-        Route::get('mock-sbp-payment/{payment}', 'sbpPayment')->name('sbp.payment');
+        Route::get('/mock-sbp-payment/{payment}', 'sbpPayment')->name('sbp.payment');
         Route::get('/mock-sbp-payment/{payment}/confirm', 'confirmSbpPayment')->name('sbp.payment.confirm');
         Route::get('/payment/success', 'success')->name('payment.success');
     });
@@ -36,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [AppController::class, 'dashboard'])->name('dashboard');
         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
         Route::get('trash', [AppController::class, 'trash'])->name('trash');
-        Route::get('analytics', [AppController::class, 'analytics'])->name('analytics');
+        Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
     });
 });
 

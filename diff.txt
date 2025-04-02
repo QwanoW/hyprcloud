@@ -1,0 +1,1028 @@
+diff --git a/app/Http/Controllers/FileController.php b/app/Http/Controllers/FileController.php
+index d9d8bf7..6465617 100644
+--- a/app/Http/Controllers/FileController.php
++++ b/app/Http/Controllers/FileController.php
+@@ -3,7 +3,8 @@
+ namespace App\Http\Controllers;
+ 
+ use App\Enum\FileTypeEnum;
+-use App\Http\Resources\FileCollection;
++use App\Services\ActivityLoggerService;
++use App\Http\Resources\FileResource;
+ use App\Models\File;
+ use Illuminate\Http\RedirectResponse;
+ use Illuminate\Http\Request;
+@@ -12,6 +13,7 @@
+ use Illuminate\Support\Facades\Auth;
+ use Illuminate\Support\Facades\Storage;
+ use Inertia\Inertia;
++use ZipArchive;
+ 
+ class FileController extends Controller
+ {
+@@ -111,13 +113,19 @@ public function store(Request $request): RedirectResponse
+ 
+             $path = $uploadedFile->store($user->id, 'local');
+ 
+-            File::create([
++            $file = File::create([
+                 'user_id' => $user->id,
+                 'name' => $uploadedFile->getClientOriginalName(),
+                 'type' => $fileType->value,
+                 'size' => $uploadedFile->getSize(),
+                 'path' => $path,
+             ]);
++
++            ActivityLoggerService::logFileUpload(
++                $file->id,
++                $file->name,
++                $file->size
++            );
+         }
+ 
+         return back();
+@@ -195,6 +203,12 @@ function destroy($id): RedirectResponse
+             abort(403);
+         }
+ 
++        ActivityLoggerService::logFileDelete(
++            $file->id,
++            $file->name,
++            $file->size
++        );
++
+         $file->delete();
+ 
+         return back();
+@@ -221,6 +235,15 @@ function destroyMultiple(Request $request): RedirectResponse
+             abort(403);
+         }
+ 
++        $files = File::whereIn('id', $ids)->get();
++        foreach ($files as $file) {
++            ActivityLoggerService::logFileDelete(
++                $file->id,
++                $file->name,
++                $file->size
++            );
++        }
++
+         $filesForDeletion->delete();
+ 
+         return back();
+@@ -248,6 +271,12 @@ function destroyPermanentlyMultiple(Request $request): RedirectResponse
+         }
+ 
+         $fileForMovingToTrash->each(function (File $file) {
++            ActivityLoggerService::logFileDelete(
++                $file->id,
++                $file->name,
++                $file->size,
++                true
++            );
+             $file->forceDelete();
+         });
+ 
+@@ -263,6 +292,12 @@ function restore($id): RedirectResponse
+             abort(403);
+         }
+ 
++        ActivityLoggerService::logFileRestore(
++            $file->id,
++            $file->name,
++            $file->size
++        );
++
+         $file->restore();
+ 
+         return back();
+@@ -289,9 +324,89 @@ function restoreMultiple(Request $request): RedirectResponse
+         }
+ 
+         $filesForRestore->each(function (File $file) {
++            ActivityLoggerService::logFileRestore(
++                $file->id,
++                $file->name,
++                $file->size
++            );
+             $file->restore();
+         });
+ 
+         return back();
+     }
++
++    public function downloadZip(Request $request)
++    {
++        if (session()->has('last_zip_file')) {
++            $previousZipFile = session('last_zip_file');
++            $prevZipPath = storage_path("app/public/{$previousZipFile}");
++            if (file_exists($prevZipPath)) {
++                unlink($prevZipPath);
++            }
++            session()->forget('last_zip_file');
++        }
++    
++        $validated = $request->validate([
++            'ids' => 'required|array',
++            'ids.*' => 'integer',
++        ]);
++    
++        $ids = $validated['ids'];
++        $userId = Auth::id();
++    
++        $files = File::whereIn('id', $ids)->where('user_id', $userId)->get();
++        
++        if ($files->isEmpty()) {
++            return response()->json(['error' => 'Файлы не найдены'], 404);
++        }
++    
++        $zipFileName = "files_" . time() . ".zip";
++        $zipPath = storage_path("app/public/{$zipFileName}");
++    
++        $zip = new ZipArchive();
++        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
++            return response()->json(['error' => 'Не удалось создать архив'], 500);
++        }
++    
++        foreach ($files as $file) {
++            $filePath = storage_path("app/private/" . $file->path);
++            if (file_exists($filePath)) {
++                $zip->addFile($filePath, $file->name);
++            }
++        }
++        
++        $zip->close();
++        
++        $zipSize = filesize($zipPath);
++
++        ActivityLoggerService::logZipDownload($ids, $zipSize);
++    
++        session(['last_zip_file' => $zipFileName]);
++    
++        $downloadUrl = asset("storage/{$zipFileName}");
++    
++        return response()->json([
++            'download_url' => $downloadUrl
++        ]);
++    }
++    
++    public function search(Request $request)
++    {
++        $validated = $request->validate([
++            'q' => 'required|string',
++        ]);
++
++        $query = $validated['q'];
++        $userId = Auth::id();
++
++        $files = File::query()
++            ->where('user_id', $userId)
++            ->where('name', 'like', '%' . $query . '%')
++            ->limit(10)
++            ->get();
++
++        return response()->json([
++            'files' => FileResource::collection($files),
++        ]);
++    }
+ }
+diff --git a/bun.lock b/bun.lock
+index 3d658ce..b6a3f8a 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -15,6 +15,7 @@
+         "@radix-ui/react-dropdown-menu": "^2.1.6",
+         "@radix-ui/react-label": "^2.1.2",
+         "@radix-ui/react-navigation-menu": "^1.2.5",
++        "@radix-ui/react-popover": "^1.1.6",
+         "@radix-ui/react-progress": "^1.1.2",
+         "@radix-ui/react-radio-group": "^1.2.3",
+         "@radix-ui/react-scroll-area": "^1.2.3",
+@@ -31,6 +32,7 @@
+         "@types/react": "^19.0.3",
+         "@types/react-dom": "^19.0.2",
+         "@vitejs/plugin-react": "^4.3.4",
++        "axios": "^1.8.4",
+         "class-variance-authority": "^0.7.1",
+         "clsx": "^2.1.1",
+         "concurrently": "^9.0.1",
+@@ -43,6 +45,7 @@
+         "react-dropzone": "^14.3.8",
+         "react-qr-code": "^2.0.15",
+         "react-selecto": "^1.26.3",
++        "recharts": "^2.15.1",
+         "sonner": "^2.0.1",
+         "tailwind-merge": "^3.0.1",
+         "tailwindcss": "^4.0.0",
+@@ -68,6 +71,9 @@
+       },
+     },
+   },
++  "overrides": {
++    "react-is": "^19.0.0-rc-69d4b800-20241021",
++  },
+   "packages": {
+     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
+ 
+@@ -101,6 +107,8 @@
+ 
+     "@babel/plugin-transform-react-jsx-source": ["@babel/plugin-transform-react-jsx-source@7.25.9", "", { "dependencies": { "@babel/helper-plugin-utils": "^7.25.9" }, "peerDependencies": { "@babel/core": "^7.0.0-0" } }, "sha512-+iqjT8xmXhhYv4/uiYd8FNQsraMFZIfxVSqxxVSZP0WbbSAWvBXAul0m/zu+7Vv4O/3WtApy9pmaTMiumEZgfg=="],
+ 
++    "@babel/runtime": ["@babel/runtime@7.27.0", "", { "dependencies": { "regenerator-runtime": "^0.14.0" } }, "sha512-VtPOkrdPHZsKc/clNqyi9WUA8TINkZ4cGk63UUE3u4pmB2k+ZMQRDuIOagv8UVd6j7k0T3+RRIb7beKTebNbcw=="],
++
+     "@babel/template": ["@babel/template@7.26.9", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@babel/parser": "^7.26.9", "@babel/types": "^7.26.9" } }, "sha512-qyRplbeIpNZhmzOysF/wFMuP9sctmh2cFzRAZOn1YapxBsE1i9bJIY586R/WBLfLcmcBlM8ROBiQURnnNy+zfA=="],
+ 
+     "@babel/traverse": ["@babel/traverse@7.26.9", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@babel/generator": "^7.26.9", "@babel/parser": "^7.26.9", "@babel/template": "^7.26.9", "@babel/types": "^7.26.9", "debug": "^4.3.1", "globals": "^11.1.0" } }, "sha512-ZYW7L+pL8ahU5fXmNbPF+iZFHCv5scFak7MZ9bwaRPLUhHh7QQEMjZUg0HevihoqCM5iSYHN61EyCoZvqC+bxg=="],
+@@ -267,6 +275,8 @@
+ 
+     "@radix-ui/react-navigation-menu": ["@radix-ui/react-navigation-menu@1.2.5", "", { "dependencies": { "@radix-ui/primitive": "1.1.1", "@radix-ui/react-collection": "1.1.2", "@radix-ui/react-compose-refs": "1.1.1", "@radix-ui/react-context": "1.1.1", "@radix-ui/react-direction": "1.1.0", "@radix-ui/react-dismissable-layer": "1.1.5", "@radix-ui/react-id": "1.1.0", "@radix-ui/react-presence": "1.1.2", "@radix-ui/react-primitive": "2.0.2", "@radix-ui/react-use-callback-ref": "1.1.0", "@radix-ui/react-use-controllable-state": "1.1.0", "@radix-ui/react-use-layout-effect": "1.1.0", "@radix-ui/react-use-previous": "1.1.0", "@radix-ui/react-visually-hidden": "1.1.2" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-myMHHQUZ3ZLTi8W381/Vu43Ia0NqakkQZ2vzynMmTUtQQ9kNkjzhOwkZC9TAM5R07OZUVIQyHC06f/9JZJpvvA=="],
+ 
++    "@radix-ui/react-popover": ["@radix-ui/react-popover@1.1.6", "", { "dependencies": { "@radix-ui/primitive": "1.1.1", "@radix-ui/react-compose-refs": "1.1.1", "@radix-ui/react-context": "1.1.1", "@radix-ui/react-dismissable-layer": "1.1.5", "@radix-ui/react-focus-guards": "1.1.1", "@radix-ui/react-focus-scope": "1.1.2", "@radix-ui/react-id": "1.1.0", "@radix-ui/react-popper": "1.2.2", "@radix-ui/react-portal": "1.1.4", "@radix-ui/react-presence": "1.1.2", "@radix-ui/react-primitive": "2.0.2", "@radix-ui/react-slot": "1.1.2", "@radix-ui/react-use-controllable-state": "1.1.0", "aria-hidden": "^1.2.4", "react-remove-scroll": "^2.6.3" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-NQouW0x4/GnkFJ/pRqsIS3rM/k97VzKnVb2jB7Gq7VEGPy5g7uNV1ykySFt7eWSp3i2uSGFwaJcvIRJBAHmmFg=="],
++
+     "@radix-ui/react-popper": ["@radix-ui/react-popper@1.2.2", "", { "dependencies": { "@floating-ui/react-dom": "^2.0.0", "@radix-ui/react-arrow": "1.1.2", "@radix-ui/react-compose-refs": "1.1.1", "@radix-ui/react-context": "1.1.1", "@radix-ui/react-primitive": "2.0.2", "@radix-ui/react-use-callback-ref": "1.1.0", "@radix-ui/react-use-layout-effect": "1.1.0", "@radix-ui/react-use-rect": "1.1.0", "@radix-ui/react-use-size": "1.1.0", "@radix-ui/rect": "1.1.0" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-Rvqc3nOpwseCyj/rgjlJDYAgyfw7OC1tTkKn2ivhaMGcYt8FSBlahHOZak2i3QwkRXUXgGgzeEe2RuqeEHuHgA=="],
+ 
+     "@radix-ui/react-portal": ["@radix-ui/react-portal@1.1.4", "", { "dependencies": { "@radix-ui/react-primitive": "2.0.2", "@radix-ui/react-use-layout-effect": "1.1.0" }, "peerDependencies": { "@types/react": "*", "@types/react-dom": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-sn2O9k1rPFYVyKd5LAJfo96JlSGVFpa1fS6UuBJfrZadudiw5tAmru+n1x7aMRQ84qDM71Zh1+SzK5QwU0tJfA=="],
+@@ -419,6 +429,24 @@
+ 
+     "@types/babel__traverse": ["@types/babel__traverse@7.20.6", "", { "dependencies": { "@babel/types": "^7.20.7" } }, "sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg=="],
+ 
++    "@types/d3-array": ["@types/d3-array@3.2.1", "", {}, "sha512-Y2Jn2idRrLzUfAKV2LyRImR+y4oa2AntrgID95SHJxuMUrkNXmanDSed71sRNZysveJVt1hLLemQZIady0FpEg=="],
++
++    "@types/d3-color": ["@types/d3-color@3.1.3", "", {}, "sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A=="],
++
++    "@types/d3-ease": ["@types/d3-ease@3.0.2", "", {}, "sha512-NcV1JjO5oDzoK26oMzbILE6HW7uVXOHLQvHshBUW4UMdZGfiY6v5BeQwh9a9tCzv+CeefZQHJt5SRgK154RtiA=="],
++
++    "@types/d3-interpolate": ["@types/d3-interpolate@3.0.4", "", { "dependencies": { "@types/d3-color": "*" } }, "sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA=="],
++
++    "@types/d3-path": ["@types/d3-path@3.1.1", "", {}, "sha512-VMZBYyQvbGmWyWVea0EHs/BwLgxc+MKi1zLDCONksozI4YJMcTt8ZEuIR4Sb1MMTE8MMW49v0IwI5+b7RmfWlg=="],
++
++    "@types/d3-scale": ["@types/d3-scale@4.0.9", "", { "dependencies": { "@types/d3-time": "*" } }, "sha512-dLmtwB8zkAeO/juAMfnV+sItKjlsw2lKdZVVy6LRr0cBmegxSABiLEpGVmSJJ8O08i4+sGR6qQtb6WtuwJdvVw=="],
++
++    "@types/d3-shape": ["@types/d3-shape@3.1.7", "", { "dependencies": { "@types/d3-path": "*" } }, "sha512-VLvUQ33C+3J+8p+Daf+nYSOsjB4GXp19/S/aGo60m9h1v6XaxjiT82lKVWJCfzhtuZ3yD7i/TPeC/fuKLLOSmg=="],
++
++    "@types/d3-time": ["@types/d3-time@3.0.4", "", {}, "sha512-yuzZug1nkAAaBlBBikKZTgzCeA+k1uy4ZFwWANOfKw5z5LRhV0gNA7gNkKm7HoK+HRN0wX3EkxGk0fpbWhmB7g=="],
++
++    "@types/d3-timer": ["@types/d3-timer@3.0.2", "", {}, "sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw=="],
++
+     "@types/estree": ["@types/estree@1.0.6", "", {}, "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw=="],
+ 
+     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
+@@ -481,7 +509,7 @@
+ 
+     "available-typed-arrays": ["available-typed-arrays@1.0.7", "", { "dependencies": { "possible-typed-array-names": "^1.0.0" } }, "sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ=="],
+ 
+-    "axios": ["axios@1.7.9", "", { "dependencies": { "follow-redirects": "^1.15.6", "form-data": "^4.0.0", "proxy-from-env": "^1.1.0" } }, "sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw=="],
++    "axios": ["axios@1.8.4", "", { "dependencies": { "follow-redirects": "^1.15.6", "form-data": "^4.0.0", "proxy-from-env": "^1.1.0" } }, "sha512-eBSYY4Y68NNlHbHBMdeDmKNtDgXWhQsJcGqzO3iLUM0GraQFSS9cVgPX5I9b3lbdFKyYoAEGAZF1DwhTaljNAw=="],
+ 
+     "balanced-match": ["balanced-match@1.0.2", "", {}, "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="],
+ 
+@@ -529,6 +557,28 @@
+ 
+     "csstype": ["csstype@3.1.3", "", {}, "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw=="],
+ 
++    "d3-array": ["d3-array@3.2.4", "", { "dependencies": { "internmap": "1 - 2" } }, "sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg=="],
++
++    "d3-color": ["d3-color@3.1.0", "", {}, "sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA=="],
++
++    "d3-ease": ["d3-ease@3.0.1", "", {}, "sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w=="],
++
++    "d3-format": ["d3-format@3.1.0", "", {}, "sha512-YyUI6AEuY/Wpt8KWLgZHsIU86atmikuoOmCfommt0LYHiQSPjvX2AcFc38PX0CBpr2RCyZhjex+NS/LPOv6YqA=="],
++
++    "d3-interpolate": ["d3-interpolate@3.0.1", "", { "dependencies": { "d3-color": "1 - 3" } }, "sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g=="],
++
++    "d3-path": ["d3-path@3.1.0", "", {}, "sha512-p3KP5HCf/bvjBSSKuXid6Zqijx7wIfNW+J/maPs+iwR35at5JCbLUT0LzF1cnjbCHWhqzQTIN2Jpe8pRebIEFQ=="],
++
++    "d3-scale": ["d3-scale@4.0.2", "", { "dependencies": { "d3-array": "2.10.0 - 3", "d3-format": "1 - 3", "d3-interpolate": "1.2.0 - 3", "d3-time": "2.1.1 - 3", "d3-time-format": "2 - 4" } }, "sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ=="],
++
++    "d3-shape": ["d3-shape@3.2.0", "", { "dependencies": { "d3-path": "^3.1.0" } }, "sha512-SaLBuwGm3MOViRq2ABk3eLoxwZELpH6zhl3FbAoJ7Vm1gofKx6El1Ib5z23NUEhF9AsGl7y+dzLe5Cw2AArGTA=="],
++
++    "d3-time": ["d3-time@3.1.0", "", { "dependencies": { "d3-array": "2 - 3" } }, "sha512-VqKjzBLejbSMT4IgbmVgDjpkYrNWUYJnbCGo874u7MMKIWsILRX+OpX/gTk8MqjpT1A/c6HY2dCA77ZN0lkQ2Q=="],
++
++    "d3-time-format": ["d3-time-format@4.1.0", "", { "dependencies": { "d3-time": "1 - 3" } }, "sha512-dJxPBlzC7NugB2PDLwo9Q8JiTR3M3e4/XANkreKSUxF8vvXKqm1Yfq4Q5dl8budlunRVlUUaDUgFt7eA8D6NLg=="],
++
++    "d3-timer": ["d3-timer@3.0.1", "", {}, "sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA=="],
++
+     "data-view-buffer": ["data-view-buffer@1.0.2", "", { "dependencies": { "call-bound": "^1.0.3", "es-errors": "^1.3.0", "is-data-view": "^1.0.2" } }, "sha512-EmKO5V3OLXh1rtK2wgXRansaK1/mtVdTUEiEI0W8RkvgT05kfxaH29PliLnpLP73yYO6142Q72QNa8Wx/A5CqQ=="],
+ 
+     "data-view-byte-length": ["data-view-byte-length@1.0.2", "", { "dependencies": { "call-bound": "^1.0.3", "es-errors": "^1.3.0", "is-data-view": "^1.0.2" } }, "sha512-tuhGbE6CfTM9+5ANGf+oQb72Ky/0+s3xKUpHvShfiz2RxMFgFPjsXuRLBVMtvMs15awe45SRb83D6wH4ew6wlQ=="],
+@@ -537,6 +587,8 @@
+ 
+     "debug": ["debug@4.4.0", "", { "dependencies": { "ms": "^2.1.3" } }, "sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA=="],
+ 
++    "decimal.js-light": ["decimal.js-light@2.5.1", "", {}, "sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg=="],
++
+     "deep-is": ["deep-is@0.1.4", "", {}, "sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ=="],
+ 
+     "deepmerge": ["deepmerge@4.3.1", "", {}, "sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A=="],
+@@ -553,6 +605,8 @@
+ 
+     "doctrine": ["doctrine@2.1.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw=="],
+ 
++    "dom-helpers": ["dom-helpers@5.2.1", "", { "dependencies": { "@babel/runtime": "^7.8.7", "csstype": "^3.0.2" } }, "sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA=="],
++
+     "dunder-proto": ["dunder-proto@1.0.1", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.1", "es-errors": "^1.3.0", "gopd": "^1.2.0" } }, "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A=="],
+ 
+     "electron-to-chromium": ["electron-to-chromium@1.5.103", "", {}, "sha512-P6+XzIkfndgsrjROJWfSvVEgNHtPgbhVyTkwLjUM2HU/h7pZRORgaTlHqfAikqxKmdJMLW8fftrdGWbd/Ds0FA=="],
+@@ -605,8 +659,12 @@
+ 
+     "esutils": ["esutils@2.0.3", "", {}, "sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g=="],
+ 
++    "eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
++
+     "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
+ 
++    "fast-equals": ["fast-equals@5.2.2", "", {}, "sha512-V7/RktU11J3I36Nwq2JnZEM7tNm17eBJz+u25qdxBZeCKiX6BkVSZQjwWIr+IobgnZy+ag73tTZgZi7tr0LrBw=="],
++
+     "fast-glob": ["fast-glob@3.3.3", "", { "dependencies": { "@nodelib/fs.stat": "^2.0.2", "@nodelib/fs.walk": "^1.2.3", "glob-parent": "^5.1.2", "merge2": "^1.3.0", "micromatch": "^4.0.8" } }, "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg=="],
+ 
+     "fast-json-stable-stringify": ["fast-json-stable-stringify@2.1.0", "", {}, "sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw=="],
+@@ -691,6 +749,8 @@
+ 
+     "internal-slot": ["internal-slot@1.1.0", "", { "dependencies": { "es-errors": "^1.3.0", "hasown": "^2.0.2", "side-channel": "^1.1.0" } }, "sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw=="],
+ 
++    "internmap": ["internmap@2.0.3", "", {}, "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg=="],
++
+     "is-array-buffer": ["is-array-buffer@3.0.5", "", { "dependencies": { "call-bind": "^1.0.8", "call-bound": "^1.0.3", "get-intrinsic": "^1.2.6" } }, "sha512-DDfANUiiG2wC1qawP66qlTugJeL5HyzMpfr8lLK+jMQirGzNod0B12cFB/9q838Ru27sBwfw78/rdoU7RERz6A=="],
+ 
+     "is-async-function": ["is-async-function@2.1.1", "", { "dependencies": { "async-function": "^1.0.0", "call-bound": "^1.0.3", "get-proto": "^1.0.1", "has-tostringtag": "^1.0.2", "safe-regex-test": "^1.1.0" } }, "sha512-9dgM/cZBnNvjzaMYHVoxxfPj2QXt22Ev7SuuPrs+xav0ukGB0S6d4ydZdEiM48kLx5kDV+QBPrpVnFyefL8kkQ=="],
+@@ -899,7 +959,7 @@
+ 
+     "react-dropzone": ["react-dropzone@14.3.8", "", { "dependencies": { "attr-accept": "^2.2.4", "file-selector": "^2.1.0", "prop-types": "^15.8.1" }, "peerDependencies": { "react": ">= 16.8 || 18.0.0" } }, "sha512-sBgODnq+lcA4P296DY4wacOZz3JFpD99fp+hb//iBO2HHnyeZU3FwWyXJ6salNpqQdsZrgMrotuko/BdJMV8Ug=="],
+ 
+-    "react-is": ["react-is@16.13.1", "", {}, "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="],
++    "react-is": ["react-is@19.1.0", "", {}, "sha512-Oe56aUPnkHyyDxxkvqtd7KkdQP5uIUfHxd5XTb3wE9d/kRnZLmKbDB0GWk919tdQ+mxxPtG6EAs6RMT6i1qtHg=="],
+ 
+     "react-qr-code": ["react-qr-code@2.0.15", "", { "dependencies": { "prop-types": "^15.8.1", "qr.js": "0.0.0" }, "peerDependencies": { "react": "*" } }, "sha512-MkZcjEXqVKqXEIMVE0mbcGgDpkfSdd8zhuzXEl9QzYeNcw8Hq2oVIzDLWuZN2PQBwM5PWjc2S31K8Q1UbcFMfw=="],
+ 
+@@ -911,10 +971,20 @@
+ 
+     "react-selecto": ["react-selecto@1.26.3", "", { "dependencies": { "selecto": "~1.26.3" } }, "sha512-Ubik7kWSnZyQEBNro+1k38hZaI1tJarE+5aD/qsqCOA1uUBSjgKVBy3EWRzGIbdmVex7DcxznFZLec/6KZNvwQ=="],
+ 
++    "react-smooth": ["react-smooth@4.0.4", "", { "dependencies": { "fast-equals": "^5.0.1", "prop-types": "^15.8.1", "react-transition-group": "^4.4.5" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-gnGKTpYwqL0Iii09gHobNolvX4Kiq4PKx6eWBCYYix+8cdw+cGo3do906l1NBPKkSWx1DghC1dlWG9L2uGd61Q=="],
++
+     "react-style-singleton": ["react-style-singleton@2.2.3", "", { "dependencies": { "get-nonce": "^1.0.0", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ=="],
+ 
++    "react-transition-group": ["react-transition-group@4.4.5", "", { "dependencies": { "@babel/runtime": "^7.5.5", "dom-helpers": "^5.0.1", "loose-envify": "^1.4.0", "prop-types": "^15.6.2" }, "peerDependencies": { "react": ">=16.6.0", "react-dom": ">=16.6.0" } }, "sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g=="],
++
++    "recharts": ["recharts@2.15.1", "", { "dependencies": { "clsx": "^2.0.0", "eventemitter3": "^4.0.1", "lodash": "^4.17.21", "react-is": "^18.3.1", "react-smooth": "^4.0.4", "recharts-scale": "^0.4.4", "tiny-invariant": "^1.3.1", "victory-vendor": "^36.6.8" }, "peerDependencies": { "react": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-v8PUTUlyiDe56qUj82w/EDVuzEFXwEHp9/xOowGAZwfLjB9uAy3GllQVIYMWF6nU+qibx85WF75zD7AjqoT54Q=="],
++
++    "recharts-scale": ["recharts-scale@0.4.5", "", { "dependencies": { "decimal.js-light": "^2.4.1" } }, "sha512-kivNFO+0OcUNu7jQquLXAxz1FIwZj8nrj+YkOKc5694NbjCvcT6aSZiIzNzd2Kul4o4rTto8QVR9lMNtxD4G1w=="],
++
+     "reflect.getprototypeof": ["reflect.getprototypeof@1.0.10", "", { "dependencies": { "call-bind": "^1.0.8", "define-properties": "^1.2.1", "es-abstract": "^1.23.9", "es-errors": "^1.3.0", "es-object-atoms": "^1.0.0", "get-intrinsic": "^1.2.7", "get-proto": "^1.0.1", "which-builtin-type": "^1.2.1" } }, "sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw=="],
+ 
++    "regenerator-runtime": ["regenerator-runtime@0.14.1", "", {}, "sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw=="],
++
+     "regexp.prototype.flags": ["regexp.prototype.flags@1.5.4", "", { "dependencies": { "call-bind": "^1.0.8", "define-properties": "^1.2.1", "es-errors": "^1.3.0", "get-proto": "^1.0.1", "gopd": "^1.2.0", "set-function-name": "^2.0.2" } }, "sha512-dYqgNSZbDwkaJ2ceRd9ojCGjBq+mOm9LmtXnAnEGyHhN/5R7iDW2TRw3h+o/jCFxus3P2LfWIIiwowAjANm7IA=="],
+ 
+     "require-directory": ["require-directory@2.1.1", "", {}, "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="],
+@@ -997,6 +1067,8 @@
+ 
+     "tapable": ["tapable@2.2.1", "", {}, "sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ=="],
+ 
++    "tiny-invariant": ["tiny-invariant@1.3.3", "", {}, "sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg=="],
++
+     "to-regex-range": ["to-regex-range@5.0.1", "", { "dependencies": { "is-number": "^7.0.0" } }, "sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ=="],
+ 
+     "tree-kill": ["tree-kill@1.2.2", "", { "bin": "cli.js" }, "sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A=="],
+@@ -1029,6 +1101,8 @@
+ 
+     "use-sidecar": ["use-sidecar@1.1.3", "", { "dependencies": { "detect-node-es": "^1.1.0", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ=="],
+ 
++    "victory-vendor": ["victory-vendor@36.9.2", "", { "dependencies": { "@types/d3-array": "^3.0.3", "@types/d3-ease": "^3.0.0", "@types/d3-interpolate": "^3.0.1", "@types/d3-scale": "^4.0.2", "@types/d3-shape": "^3.1.0", "@types/d3-time": "^3.0.0", "@types/d3-timer": "^3.0.0", "d3-array": "^3.1.6", "d3-ease": "^3.0.1", "d3-interpolate": "^3.0.1", "d3-scale": "^4.0.2", "d3-shape": "^3.1.0", "d3-time": "^3.0.0", "d3-timer": "^3.0.1" } }, "sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ=="],
++
+     "vite": ["vite@6.1.1", "", { "dependencies": { "esbuild": "^0.24.2", "postcss": "^8.5.2", "rollup": "^4.30.1" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^18.0.0 || ^20.0.0 || >=22.0.0", "jiti": ">=1.21.0", "less": "*", "lightningcss": "^1.21.0", "sass": "*", "sass-embedded": "*", "stylus": "*", "sugarss": "*", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": "bin/vite.js" }, "sha512-4GgM54XrwRfrOp297aIYspIti66k56v16ZnqHvrIM7mG+HjDlAwS7p+Srr7J6fGvEdOJ5JcQ/D9T7HhtdXDTzA=="],
+ 
+     "vite-plugin-full-reload": ["vite-plugin-full-reload@1.2.0", "", { "dependencies": { "picocolors": "^1.0.0", "picomatch": "^2.3.1" } }, "sha512-kz18NW79x0IHbxRSHm0jttP4zoO9P9gXh+n6UTwlNKnviTTEpOlum6oS9SmecrTtSr+muHEn5TUuC75UovQzcA=="],
+@@ -1065,6 +1139,8 @@
+ 
+     "@humanfs/node/@humanwhocodes/retry": ["@humanwhocodes/retry@0.3.1", "", {}, "sha512-JBxkERygn7Bv/GbN5Rv8Ul6LVknS+5Bp6RgDC/O8gEBU/yeH5Ui5C/OlWrTb6qct7LjjfT6Re2NxB0ln0yYybA=="],
+ 
++    "@inertiajs/core/axios": ["axios@1.7.9", "", { "dependencies": { "follow-redirects": "^1.15.6", "form-data": "^4.0.0", "proxy-from-env": "^1.1.0" } }, "sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw=="],
++
+     "@typescript-eslint/typescript-estree/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
+ 
+     "@typescript-eslint/typescript-estree/semver": ["semver@7.7.1", "", { "bin": "bin/semver.js" }, "sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA=="],
+diff --git a/package.json b/package.json
+index fa6d449..34f0a0b 100644
+--- a/package.json
++++ b/package.json
+@@ -34,6 +34,7 @@
+         "@radix-ui/react-dropdown-menu": "^2.1.6",
+         "@radix-ui/react-label": "^2.1.2",
+         "@radix-ui/react-navigation-menu": "^1.2.5",
++        "@radix-ui/react-popover": "^1.1.6",
+         "@radix-ui/react-progress": "^1.1.2",
+         "@radix-ui/react-radio-group": "^1.2.3",
+         "@radix-ui/react-scroll-area": "^1.2.3",
+@@ -50,6 +51,7 @@
+         "@types/react": "^19.0.3",
+         "@types/react-dom": "^19.0.2",
+         "@vitejs/plugin-react": "^4.3.4",
++        "axios": "^1.8.4",
+         "class-variance-authority": "^0.7.1",
+         "clsx": "^2.1.1",
+         "concurrently": "^9.0.1",
+@@ -62,6 +64,7 @@
+         "react-dropzone": "^14.3.8",
+         "react-qr-code": "^2.0.15",
+         "react-selecto": "^1.26.3",
++        "recharts": "^2.15.1",
+         "sonner": "^2.0.1",
+         "tailwind-merge": "^3.0.1",
+         "tailwindcss": "^4.0.0",
+@@ -73,5 +76,8 @@
+         "@rollup/rollup-linux-x64-gnu": "4.9.5",
+         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
+         "lightningcss-linux-x64-gnu": "^1.29.1"
++    },
++    "overrides": {
++        "react-is": "^19.0.0-rc-69d4b800-20241021"
+     }
+ }
+diff --git a/resources/js/components/file-manage/file-action-menu.tsx b/resources/js/components/file-manage/file-action-menu.tsx
+index cbda1ba..5b7f8ef 100644
+--- a/resources/js/components/file-manage/file-action-menu.tsx
++++ b/resources/js/components/file-manage/file-action-menu.tsx
+@@ -6,7 +6,7 @@ interface ActionMenuProps {
+     variant: 'default' | 'trash';
+     isAlreadyShared?: boolean;
+     disableMultipleAction?: boolean;
+-    onAction: (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently') => void;
++    onAction: (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => void;
+     onClose: () => void;
+ }
+ 
+@@ -31,6 +31,9 @@ export const ActionMenu = ({ pos, variant, isAlreadyShared = false, disableMulti
+                         <Button variant="ghost" onClick={() => onAction('delete')}>
+                             Delete
+                         </Button>
++                        <Button variant="ghost" onClick={() => onAction('download-zip')}>
++                            Download zip
++                        </Button>
+                     </CardContent>
+                 </Card>
+             </div>
+diff --git a/resources/js/components/file-manage/file-item.tsx b/resources/js/components/file-manage/file-item.tsx
+index 3d73170..c28c7d9 100644
+--- a/resources/js/components/file-manage/file-item.tsx
++++ b/resources/js/components/file-manage/file-item.tsx
+@@ -6,19 +6,45 @@ import { Link } from 'lucide-react';
+ import React from 'react';
+ 
+ interface FileItemProps {
+-    variant: 'row' | 'card';
++    variant: 'row' | 'card' | 'search';
+     className?: string;
+     file: TFile;
+ }
+ 
+ export const FileItem = React.memo(({ file, className, variant }: FileItemProps) => {
+     const updatedAt = new Date(file.updated_at);
+-
+     // cant see file if file is in trash
+     const moveIntoFile =
+         file.trash
+-        ? undefined
+-        : () => open(file.url);
++            ? undefined
++            : () => open(file.url);
++
++    if (variant === 'search') {
++        return (
++            <Card
++                onDoubleClick={moveIntoFile}
++                data-id={file.id}
++                className={'hover:bg-muted border-none px-2 py-1.5 shadow-none transition-colors cursor-pointer ' + className}
++            >
++                <CardContent className="flex w-full items-center gap-2 p-0">
++                    <div className="h-8 w-8 flex-shrink-0">
++                        <FileIcon file={file} />
++                    </div>
++                    <div className="min-w-0 flex-1 overflow-hidden pr-2">
++                        <CardTitle title={file.name} className="truncate font-mono text-sm">
++                            {file.name}
++                        </CardTitle>
++                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
++                            <span>{formatFileSize(file.size)}</span>
++                            <span>·</span>
++                            <span>{updatedAt.toLocaleDateString()}</span>
++                        </div>
++                    </div>
++                    {file.shared ? <Link className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <div></div>}
++                </CardContent>
++            </Card>
++        );
++    }
+ 
+     if (variant === 'card')
+         return (
+@@ -61,4 +87,4 @@ export const FileItem = React.memo(({ file, className, variant }: FileItemProps)
+             </CardContent>
+         </Card>
+     );
+-});
++});
+\ No newline at end of file
+diff --git a/resources/js/components/file-manage/files.tsx b/resources/js/components/file-manage/files.tsx
+index 418bcd6..631176c 100644
+--- a/resources/js/components/file-manage/files.tsx
++++ b/resources/js/components/file-manage/files.tsx
+@@ -9,6 +9,8 @@ import { Pagination, TFile } from '@/types';
+ import { useCallback, useRef } from 'react';
+ import { ActionMenu } from '@/components/file-manage/file-action-menu';
+ import { useOutsideClick } from '@/hooks/use-outside-click';
++import axios from 'axios';
++import { toast } from 'sonner';
+ 
+ interface FilesProps {
+     variant?: 'default' | 'trash';
+@@ -38,7 +40,7 @@ export function Files({ variant = 'default', withActions = false, files, paginat
+         }
+     };
+ 
+-    const onAction = useCallback((action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently') => {
++    const onAction = useCallback(async (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => {
+         if (action === 'show') {
+             if (!disableMultipleAction) {
+                 const file = files.find((f) => f.id === selectedIds[0]);
+@@ -57,6 +59,15 @@ export function Files({ variant = 'default', withActions = false, files, paginat
+             trash(selectedIds);
+         } else if (action === 'delete-permanently') {
+             destroy(selectedIds);
++        } else if (action === 'download-zip') {
++            try {
++                toast.loading('Creating zip archive', { id: 'download-zip' });
++                const response = await axios.post<{ download_url: string }>(route('files.downloadZip', { ids: selectedIds }));
++                window.open(response.data.download_url, '_blank');
++                toast.success('Zip archive created successfully', { id: 'download-zip' });
++            } catch (error) {
++                toast.error('Failed to create zip archive', { id: 'download-zip' });
++            }
+         }
+     }, [share, cancelShare, restore, destroy, trash, selectedIds]);
+ 
+diff --git a/resources/js/components/search-bar.tsx b/resources/js/components/search-bar.tsx
+index 4dc3eab..6522459 100644
+--- a/resources/js/components/search-bar.tsx
++++ b/resources/js/components/search-bar.tsx
+@@ -1,11 +1,121 @@
++import { useState, useEffect, useRef } from 'react';
++import axios from 'axios';
++import { Search, Loader2, FileText } from 'lucide-react';
+ import { Input } from '@/components/ui/input';
+-import { Search } from 'lucide-react';
++import {
++    Popover,
++    PopoverContent,
++    PopoverTrigger,
++} from '@/components/ui/popover';
++import { TFile } from '@/types';
++import { FileItem } from './file-manage/file-item';
+ 
+ export function SearchBar() {
++    const [searchQuery, setSearchQuery] = useState('');
++    const [searchResults, setSearchResults] = useState<TFile[]>([]);
++    const [isLoading, setIsLoading] = useState(false);
++    const [open, setOpen] = useState(false);
++    const inputRef = useRef<HTMLDivElement>(null);
++    const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
++
++    // Track input width for popover sizing
++    useEffect(() => {
++        if (inputRef.current) {
++            const updateWidth = () => {
++                if (inputRef.current) {
++                    setInputWidth(inputRef.current.getBoundingClientRect().width);
++                }
++            };
++            
++            // Set initial width
++            updateWidth();
++            
++            // Update on resize
++            window.addEventListener('resize', updateWidth);
++            return () => window.removeEventListener('resize', updateWidth);
++        }
++    }, []);
++
++    useEffect(() => {
++        if (searchQuery.trim() === '') {
++            setSearchResults([]);
++            setOpen(false);
++            return;
++        }
++
++        setIsLoading(true);
++        const debounceTimeout = setTimeout(() => {
++            searchFiles();
++        }, 300);
++
++        return () => clearTimeout(debounceTimeout);
++    }, [searchQuery]);
++
++    const searchFiles = async () => {
++        try {
++            const response = await axios.post<{files: TFile[]}>(route('files.search'), {
++                q: searchQuery
++            });
++            setSearchResults(response.data.files);
++            setIsLoading(false);
++            setOpen(response.data.files.length > 0);
++        } catch (error) {
++            console.error('Error searching files:', error);
++            setIsLoading(false);
++        }
++    };
++
++    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
++        setSearchQuery(e.target.value);
++    };
++
+     return (
+-        <div className="relative">
+-            <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-gray-500" />
+-            <Input type="search" placeholder="Search files..." className="pl-9" />
+-        </div>
++        <Popover open={open} onOpenChange={setOpen}>
++            <PopoverTrigger asChild>
++                <div ref={inputRef} className="relative w-full max-w-md">
++                    <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-gray-500" />
++                    <Input
++                        type="search"
++                        placeholder="Search files..."
++                        className="pl-9 pr-8"
++                        value={searchQuery}
++                        onChange={handleSearch}
++                    />
++                    {isLoading && (
++                        <Loader2 className="absolute top-2.5 right-2.5 h-4 w-4 animate-spin text-gray-500" />
++                    )}
++                </div>
++            </PopoverTrigger>
++            <PopoverContent 
++                className="p-1" 
++                align="start"
++                style={{ width: inputWidth ? `${inputWidth}px` : 'auto' }}
++            >
++                {searchResults.length > 0 ? (
++                    <div className="max-h-72 overflow-y-auto py-1">
++                        <div className="flex flex-col">
++                            {searchResults.map((file) => (
++                                <FileItem 
++                                    file={file} 
++                                    variant="search" 
++                                    key={file.id} 
++                                    className="mb-0.5" 
++                                />
++                            ))}
++                        </div>
++                    </div>
++                ) : (
++                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
++                        <FileText className="h-4 w-4" />
++                        <span>No files found</span>
++                    </div>
++                )}
++                {searchResults.length > 0 && (
++                    <div className="border-t pt-1 pb-0.5 px-2 text-xs text-muted-foreground">
++                        {searchResults.length} {searchResults.length === 1 ? 'file' : 'files'} found
++                    </div>
++                )}
++            </PopoverContent>
++        </Popover>
+     );
+-}
++}
+\ No newline at end of file
+diff --git a/resources/js/hooks/file-manage/use-file-actions.tsx b/resources/js/hooks/file-manage/use-file-actions.tsx
+index 3290424..a52b4d6 100644
+--- a/resources/js/hooks/file-manage/use-file-actions.tsx
++++ b/resources/js/hooks/file-manage/use-file-actions.tsx
+@@ -21,6 +21,7 @@ function performAction(loadingMsg: string, routeName: string, payload: RequestPa
+         },
+     });
+ }
++
+ export function useFileActions() {
+     const destroy = (ids: number[]) => performAction('Deleting...', 'files.destroyPermanentlyMultiple', { ids }, 'Successfully deleted');
+     const trash = (ids: number[]) => performAction('Moving to trash...', 'files.destroyMultiple', { ids }, 'Successfully moved to trash');
+diff --git a/resources/js/lib/utils.ts b/resources/js/lib/utils.ts
+index d720b4e..829deb7 100644
+--- a/resources/js/lib/utils.ts
++++ b/resources/js/lib/utils.ts
+@@ -19,6 +19,26 @@ export function formatDate(dateString: string) {
+     });
+ }
+ 
++export const formatTimeAgo = (dateString: string) => {
++    const date = new Date(dateString);
++    const now = new Date();
++    const diffTime = Math.abs(now.getTime() - date.getTime());
++    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
++
++    if (diffDays === 0) {
++        const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
++        if (diffHours === 0) {
++            const diffMinutes = Math.floor(diffTime / (1000 * 60));
++            return `${diffMinutes} мин. назад`;
++        }
++        return `${diffHours} ч. назад`;
++    } else if (diffDays < 7) {
++        return `${diffDays} д. назад`;
++    } else {
++        return formatDate(dateString);
++    }
++};
++
+ export function formatFileSize(size: number) {
+     const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+     let unitIndex = 0;
+diff --git a/resources/js/pages/dashboard/analytics.tsx b/resources/js/pages/dashboard/analytics.tsx
+index 1189acb..4e1ee47 100644
+--- a/resources/js/pages/dashboard/analytics.tsx
++++ b/resources/js/pages/dashboard/analytics.tsx
+@@ -1,6 +1,10 @@
+-import AppLayout from '@/layouts/app-layout';
+-import { type BreadcrumbItem } from '@/types';
++import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
++import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
++import { ArrowUpCircle, ArrowDownCircle, Trash2Icon, RotateCw, FileIcon, ImageIcon, Film, AudioLines, MoreHorizontal } from 'lucide-react';
+ import { Head } from '@inertiajs/react';
++import { BreadcrumbItem } from '@/types';
++import AppLayout from '@/layouts/app-layout';
++import { formatFileSize, formatTimeAgo } from '@/lib/utils';
+ 
+ const breadcrumbs: BreadcrumbItem[] = [
+     {
+@@ -9,13 +13,222 @@ const breadcrumbs: BreadcrumbItem[] = [
+     },
+ ];
+ 
+-export default function Analytics() {
+-    return (
+-        <AppLayout breadcrumbs={breadcrumbs}>
++const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
++
++const Analytics = ({fileStats, activityByDay, activitySummary, recentActivity}: {fileStats: any, activityByDay: any, activitySummary: any, recentActivity: any}) => {
++    console.log(fileStats, activityByDay, activitySummary, recentActivity)
++
++  const getActivityIcon = (actionType: string) => {
++    switch(actionType) {
++      case 'upload': return <ArrowUpCircle className="text-green-500" />;
++      case 'download': return <ArrowDownCircle className="text-blue-500" />;
++      case 'zip_download': return <ArrowDownCircle className="text-blue-500" />;
++      case 'delete': return <Trash2Icon className="text-red-400" />;
++      case 'permanent_delete': return <Trash2Icon className="text-red-600" />;
++      case 'restore': return <RotateCw className="text-amber-500" />;
++      default: return <MoreHorizontal />;
++    }
++  };
++
++  const getActionTypeLabel = (actionType: string) => {
++    switch(actionType) {
++      case 'upload': return 'Загрузка файла';
++      case 'download': return 'Скачивание файла';
++      case 'zip_download': return 'Скачивание архива';
++      case 'delete': return 'Перемещение в корзину';
++      case 'permanent_delete': return 'Удаление навсегда';
++      case 'restore': return 'Восстановление файла';
++      default: return actionType;
++    }
++  };
++
++  const fileTypeData = [
++    { name: 'Изображения', value: fileStats.by_type.images, icon: <ImageIcon /> },
++    { name: 'Видео', value: fileStats.by_type.videos, icon: <Film /> },
++    { name: 'Аудио', value: fileStats.by_type.audio, icon: <AudioLines /> },
++    { name: 'Документы', value: fileStats.by_type.documents, icon: <FileIcon /> },
++    { name: 'Другое', value: fileStats.by_type.other, icon: <MoreHorizontal /> },
++  ];
++
++  return (
++    <AppLayout breadcrumbs={breadcrumbs}>
+             <Head title="Analytics" />
+-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+-                Analytics
++            <div className="flex h-full flex-1 flex-col gap-6 p-4">
++      <h1 className="text-3xl font-bold">Аналитика пользователя</h1>
++      
++      {/* Карточки с общей статистикой */}
++      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
++        <Card>
++          <CardHeader className="flex flex-row items-center justify-between pb-2">
++            <CardTitle className="text-sm font-medium">Общее количество файлов</CardTitle>
++            <FileIcon className="h-4 w-4 text-muted-foreground" />
++          </CardHeader>
++          <CardContent>
++            <div className="text-2xl font-bold">{fileStats.total_count}</div>
++            <p className="text-xs text-muted-foreground">
++              {formatFileSize(fileStats.total_size)}
++            </p>
++          </CardContent>
++        </Card>
++        <Card>
++          <CardHeader className="flex flex-row items-center justify-between pb-2">
++            <CardTitle className="text-sm font-medium">Загружено всего</CardTitle>
++            <ArrowUpCircle className="h-4 w-4 text-green-500" />
++          </CardHeader>
++          <CardContent>
++            <div className="text-2xl font-bold">{activitySummary.total_uploads}</div>
++            <p className="text-xs text-muted-foreground">
++              {formatFileSize(activitySummary.upload_size)}
++            </p>
++          </CardContent>
++        </Card>
++        <Card>
++          <CardHeader className="flex flex-row items-center justify-between pb-2">
++            <CardTitle className="text-sm font-medium">Скачано всего</CardTitle>
++            <ArrowDownCircle className="h-4 w-4 text-blue-500" />
++          </CardHeader>
++          <CardContent>
++            <div className="text-2xl font-bold">{activitySummary.total_downloads}</div>
++            <p className="text-xs text-muted-foreground">
++              {formatFileSize(activitySummary.download_size)}
++            </p>
++          </CardContent>
++        </Card>
++        <Card>
++          <CardHeader className="flex flex-row items-center justify-between pb-2">
++            <CardTitle className="text-sm font-medium">В корзине</CardTitle>
++            <Trash2Icon className="h-4 w-4 text-red-500" />
++          </CardHeader>
++          <CardContent>
++            <div className="text-2xl font-bold">{fileStats.trashed_count}</div>
++            <p className="text-xs text-muted-foreground">
++              {formatFileSize(fileStats.trashed_size)}
++            </p>
++          </CardContent>
++        </Card>
++      </div>
++      
++      {/* Графики активности */}
++      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
++        <Card className="col-span-1">
++          <CardHeader>
++            <CardTitle>Активность за последние 30 дней</CardTitle>
++            <CardDescription>Количество операций по дням</CardDescription>
++          </CardHeader>
++          <CardContent className="h-80">
++            <ResponsiveContainer width="100%" height="100%">
++              <LineChart
++                data={activityByDay}
++                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
++              >
++                <CartesianGrid strokeDasharray="3 3" />
++                <XAxis dataKey="date" />
++                <YAxis />
++                <Tooltip formatter={(value) => [value, 'Количество']} />
++                <Line type="monotone" dataKey="uploads" name="Загрузки" stroke="#82ca9d" />
++                <Line type="monotone" dataKey="downloads" name="Скачивания" stroke="#8884d8" />
++                <Line type="monotone" dataKey="deletes" name="Удаления" stroke="#ff7300" />
++                <Line type="monotone" dataKey="restores" name="Восстановления" stroke="#ffc658" />
++              </LineChart>
++            </ResponsiveContainer>
++          </CardContent>
++        </Card>
++        
++        <Card className="col-span-1">
++          <CardHeader>
++            <CardTitle>Объем данных (МБ)</CardTitle>
++            <CardDescription>Загрузки и скачивания по дням</CardDescription>
++          </CardHeader>
++          <CardContent className="h-80">
++            <ResponsiveContainer width="100%" height="100%">
++              <BarChart
++                data={activityByDay.map(day => ({
++                  ...day,
++                  upload_size_mb: Math.round(day.upload_size / (1024 * 1024) * 100) / 100,
++                  download_size_mb: Math.round(day.download_size / (1024 * 1024) * 100) / 100,
++                }))}
++                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
++              >
++                <CartesianGrid strokeDasharray="3 3" />
++                <XAxis dataKey="date" />
++                <YAxis />
++                <Tooltip formatter={(value) => [value, 'МБ']} />
++                <Bar dataKey="upload_size_mb" name="Загружено" fill="#82ca9d" />
++                <Bar dataKey="download_size_mb" name="Скачано" fill="#8884d8" />
++              </BarChart>
++            </ResponsiveContainer>
++          </CardContent>
++        </Card>
++      </div>
++      
++      {/* Распределение по типам файлов и последние действия */}
++      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
++        <Card>
++          <CardHeader>
++            <CardTitle>Распределение по типам файлов</CardTitle>
++          </CardHeader>
++          <CardContent>
++            <div className="h-64">
++              <ResponsiveContainer width="100%" height="100%">
++                <PieChart>
++                  <Pie
++                    data={fileTypeData}
++                    cx="50%"
++                    cy="50%"
++                    outerRadius={80}
++                    fill="#8884d8"
++                    dataKey="value"
++                    nameKey="name"
++                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
++                  >
++                    {fileTypeData.map((entry, index) => (
++                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
++                    ))}
++                  </Pie>
++                  <Tooltip formatter={(value) => [value, 'Файлов']} />
++                </PieChart>
++              </ResponsiveContainer>
++            </div>
++            <div className="mt-4 flex flex-wrap justify-center gap-3">
++              {fileTypeData.map((type, index) => (
++                <div key={index} className="flex items-center gap-2">
++                  <div className="h-3 w-3" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
++                  <span className="text-sm">{type.name}</span>
++                </div>
++              ))}
+             </div>
++          </CardContent>
++        </Card>
++        
++        <Card>
++          <CardHeader>
++            <CardTitle>Последние действия</CardTitle>
++          </CardHeader>
++          <CardContent>
++            <div className="space-y-4">
++              {recentActivity.map((activity) => (
++                <div key={activity.id} className="flex items-center gap-4">
++                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
++                    {getActivityIcon(activity.action_type)}
++                  </div>
++                  <div className="flex-1">
++                    <div className="flex items-center gap-2">
++                      <p className="font-medium">{getActionTypeLabel(activity.action_type)}</p>
++                      <span className="text-xs text-muted-foreground">{formatTimeAgo(activity.created_at)}</span>
++                    </div>
++                    <p className="text-sm text-muted-foreground">
++                      {activity.entity_name} ({formatFileSize(activity.size)})
++                    </p>
++                  </div>
++                </div>
++              ))}
++            </div>
++          </CardContent>
++        </Card>
++      </div>
++    </div>
+         </AppLayout>
+-    );
+-}
++  );
++};
++
++export default Analytics;
+\ No newline at end of file
+diff --git a/routes/web.php b/routes/web.php
+index 76b2d81..88b9b8c 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -1,6 +1,7 @@
+ <?php
+ 
+ use App\Http\Controllers\AppController;
++use App\Http\Controllers\AnalyticsController;
+ use App\Http\Controllers\FileController;
+ use App\Http\Controllers\PaymentController;
+ use App\Http\Controllers\PlanController;
+@@ -20,6 +21,10 @@
+     Route::post('files/restore-multiple', [FileController::class, 'restoreMultiple'])->name('files.restoreMultiple');
+     Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
+ 
++    // api routes
++    Route::post('files/download-zip', [FileController::class, 'downloadZip'])->name('files.downloadZip');
++    Route::post('files/search', [FileController::class, 'search'])->name('files.search');
++
+     Route::controller(PlanController::class)->group(function () {
+         Route::get('manage-plan', 'index')->name('manage-plan.index');
+     });
+@@ -27,7 +32,7 @@
+     Route::controller(PaymentController::class)->group(function () {
+         Route::get('/payment', 'index')->name('payment.index');
+         Route::post('/mock-payment', 'processPayment');
+-        Route::get('mock-sbp-payment/{payment}', 'sbpPayment')->name('sbp.payment');
++        Route::get('/mock-sbp-payment/{payment}', 'sbpPayment')->name('sbp.payment');
+         Route::get('/mock-sbp-payment/{payment}/confirm', 'confirmSbpPayment')->name('sbp.payment.confirm');
+         Route::get('/payment/success', 'success')->name('payment.success');
+     });
+@@ -36,7 +41,7 @@
+         Route::get('/', [AppController::class, 'dashboard'])->name('dashboard');
+         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
+         Route::get('trash', [AppController::class, 'trash'])->name('trash');
+-        Route::get('analytics', [AppController::class, 'analytics'])->name('analytics');
++        Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
+     });
+ });
+ 
