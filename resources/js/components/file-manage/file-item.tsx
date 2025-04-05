@@ -1,9 +1,10 @@
 import { FileIcon } from '@/components/file-manage/file-icon';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { formatFileSize } from '@/lib/utils';
+import { useFormatFileSize } from '@/hooks/file-manage/use-format-file-size';
 import { TFile } from '@/types';
-import { Link } from 'lucide-react';
-import React from 'react';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { Check, Link } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface FileItemProps {
     variant: 'row' | 'card' | 'search';
@@ -12,12 +13,47 @@ interface FileItemProps {
 }
 
 export const FileItem = React.memo(({ file, className, variant }: FileItemProps) => {
+    const { currentLocale } = useLaravelReactI18n();
+    const locale = currentLocale();
+    const fileSize = useFormatFileSize(file.size);
+
+    const [isCopied, setIsCopied] = useState(false);
     const updatedAt = new Date(file.updated_at);
+    
     // cant see file if file is in trash
     const moveIntoFile =
         file.trash
             ? undefined
             : () => open(file.url);
+
+    const handleCopyLink = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!file.shared_url) return;
+
+        navigator.clipboard.writeText(file.shared_url);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    const renderLinkIcon = () => {
+        if (!file.shared) return <div></div>;
+
+        return (
+            <button
+                onClick={handleCopyLink}
+                className="cursor-pointer relative p-1 rounded-md hover:bg-accent transition-colors"
+                aria-label="Copy shared link"
+            >
+                <Link className={`h-4 w-4 text-muted-foreground ${isCopied ? 'opacity-0' : 'opacity-100'} transition-opacity`} />
+                <Check
+                    className={`h-4 w-4 absolute top-1 left-1 text-green-600 ${
+                        isCopied ? 'opacity-100' : 'opacity-0'
+                    } transition-opacity`}
+                />
+            </button>
+        );
+    };
+        
 
     if (variant === 'search') {
         return (
@@ -35,9 +71,9 @@ export const FileItem = React.memo(({ file, className, variant }: FileItemProps)
                             {file.name}
                         </CardTitle>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>{formatFileSize(file.size)}</span>
+                            <span>{fileSize}</span>
                             <span>·</span>
-                            <span>{updatedAt.toLocaleDateString()}</span>
+                            <span>{updatedAt.toLocaleDateString(locale)}</span>
                         </div>
                     </div>
                     {file.shared ? <Link className="h-4 w-4 flex-shrink-0 text-muted-foreground" /> : <div></div>}
@@ -58,7 +94,7 @@ export const FileItem = React.memo(({ file, className, variant }: FileItemProps)
                     <CardTitle title={file.name} className="line-clamp-2 w-20 text-center font-mono text-sm break-words">
                         {file.name}
                     </CardTitle>
-                    <p className="text-muted-foreground text-center text-xs">{formatFileSize(file.size)}</p>
+                    <p className="text-muted-foreground text-center text-xs">{fileSize}</p>
                 </CardContent>
             </Card>
         );
@@ -79,10 +115,10 @@ export const FileItem = React.memo(({ file, className, variant }: FileItemProps)
                     </CardTitle>
                 </div>
                 <div className="flex w-1/2 items-center justify-between lg:w-1/3">
-                    <p className="text-muted-foreground text-center text-sm">{updatedAt.toDateString()}</p>
-                    <p className="text-muted-foreground text-center text-sm">{updatedAt.toLocaleTimeString()}</p>
-                    <p className="text-muted-foreground text-center text-sm">{formatFileSize(file.size)}</p>
-                    {file.shared ? <Link /> : <div></div>}
+                    <p className="text-muted-foreground text-center text-sm">{updatedAt.toLocaleDateString(locale)}</p>
+                    <p className="text-muted-foreground text-center text-sm">{updatedAt.toLocaleTimeString(locale)}</p>
+                    <p className="text-muted-foreground text-center text-sm">{fileSize}</p>
+                    {file.shared ? renderLinkIcon() : <div></div>}
                 </div>
             </CardContent>
         </Card>

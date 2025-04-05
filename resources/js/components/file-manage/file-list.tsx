@@ -4,8 +4,10 @@ import { InfiniteScroll } from '@/components/infinite-scroll';
 import { cn } from '@/lib/utils';
 import { Pagination, TFile } from '@/types';
 import autoAnimate from '@formkit/auto-animate';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Selecto from 'react-selecto';
+import FileSort from '@/components/file-manage/file-sort';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 interface FileListProps {
     files: TFile[];
@@ -15,6 +17,7 @@ interface FileListProps {
 }
 
 export const FilesList = ({ files, pagination, handleSelect, containerRef }: FileListProps) => {
+    const { t } = useLaravelReactI18n();
     const [viewMode, setViewMode] = useState<'list' | 'cards'>(() => (localStorage.getItem('viewMode') as 'list' | 'cards') || 'list');
 
     useEffect(() => {
@@ -38,13 +41,16 @@ export const FilesList = ({ files, pagination, handleSelect, containerRef }: Fil
 
     return (
         <div className="h-full space-y-6">
-            <ViewModeSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
+            <div className='flex justify-between'>
+                <ViewModeSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
+                <FileSort />
+            </div>
             <div ref={containerRef} className={cn(containerClass)}>
                 {renderFiles()}
             </div>
             {files.length === 0 && (
                 <div className="mt-40 text-center">
-                    <span className="text-accent-foreground">No files found</span>
+                    <span className="text-accent-foreground">{t('file_manage.list_empty')}</span>
                 </div>
             )}
             <InfiniteScroll pagination={pagination} only={['files', 'pagination']} />

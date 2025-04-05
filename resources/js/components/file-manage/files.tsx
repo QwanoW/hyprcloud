@@ -5,12 +5,14 @@ import { useFileActionMenu } from '@/hooks/file-manage/use-file-action-menu';
 import { useFileActions } from '@/hooks/file-manage/use-file-actions';
 import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
 import { useFileUpload } from '@/hooks/file-manage/use-file-upload';
-import { Pagination, TFile } from '@/types';
+import { Pagination, SharedData, TFile } from '@/types';
 import { useCallback, useRef } from 'react';
 import { ActionMenu } from '@/components/file-manage/file-action-menu';
 import { useOutsideClick } from '@/hooks/use-outside-click';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 interface FilesProps {
     variant?: 'default' | 'trash';
@@ -20,6 +22,8 @@ interface FilesProps {
 }
 
 export function Files({ variant = 'default', withActions = false, files, pagination }: FilesProps) {
+    const { t } = useLaravelReactI18n();
+    const {auth: {user}} = usePage<SharedData>().props;
     const { upload } = useFileUpload();
     const {share, cancelShare, restore, destroy, trash} = useFileActions();
     const { selectedIds, handleSelect } = useFileSelection();
@@ -41,6 +45,7 @@ export function Files({ variant = 'default', withActions = false, files, paginat
     };
 
     const onAction = useCallback(async (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => {
+        setActionMenuOpen(false); // Close menu on action
         if (action === 'show') {
             if (!disableMultipleAction) {
                 const file = files.find((f) => f.id === selectedIds[0]);
@@ -49,7 +54,7 @@ export function Files({ variant = 'default', withActions = false, files, paginat
                 }
             }
         } else if (action === 'share') {
-            share(selectedIds[0]);
+            share(selectedIds[0], user.id);
         }
          else if (action === 'cancel-share') {
             cancelShare(selectedIds[0]);
@@ -60,16 +65,17 @@ export function Files({ variant = 'default', withActions = false, files, paginat
         } else if (action === 'delete-permanently') {
             destroy(selectedIds);
         } else if (action === 'download-zip') {
+            const toastId = 'download-zip';
             try {
-                toast.loading('Creating zip archive', { id: 'download-zip' });
+                toast.loading(t('file_manage.toast_zip_creating'), { id: toastId });
                 const response = await axios.post<{ download_url: string }>(route('files.downloadZip', { ids: selectedIds }));
                 window.open(response.data.download_url, '_blank');
-                toast.success('Zip archive created successfully', { id: 'download-zip' });
+                toast.success(t('file_manage.toast_zip_success'), { id: toastId });
             } catch (error) {
-                toast.error('Failed to create zip archive', { id: 'download-zip' });
+                toast.error(t('file_manage.toast_zip_error'), { id: toastId });
             }
         }
-    }, [share, cancelShare, restore, destroy, trash, selectedIds]);
+    }, [share, cancelShare, restore, destroy, trash, selectedIds, user.id, files, disableMultipleAction, t, setActionMenuOpen]);
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">

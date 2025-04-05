@@ -8,9 +8,11 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { TFile } from '@/types';
-import { FileItem } from './file-manage/file-item';
+import { FileItem } from '@/components/file-manage/file-item';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 export function SearchBar() {
+    const { t, tChoice } = useLaravelReactI18n();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<TFile[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +20,6 @@ export function SearchBar() {
     const inputRef = useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
 
-    // Track input width for popover sizing
     useEffect(() => {
         if (inputRef.current) {
             const updateWidth = () => {
@@ -26,11 +27,7 @@ export function SearchBar() {
                     setInputWidth(inputRef.current.getBoundingClientRect().width);
                 }
             };
-            
-            // Set initial width
             updateWidth();
-            
-            // Update on resize
             window.addEventListener('resize', updateWidth);
             return () => window.removeEventListener('resize', updateWidth);
         }
@@ -76,7 +73,7 @@ export function SearchBar() {
                     <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-gray-500" />
                     <Input
                         type="search"
-                        placeholder="Search files..."
+                        placeholder={t('components.search_placeholder')}
                         className="pl-9 pr-8"
                         value={searchQuery}
                         onChange={handleSearch}
@@ -86,20 +83,21 @@ export function SearchBar() {
                     )}
                 </div>
             </PopoverTrigger>
-            <PopoverContent 
-                className="p-1" 
+            <PopoverContent
+                className="p-1"
                 align="start"
                 style={{ width: inputWidth ? `${inputWidth}px` : 'auto' }}
+                onOpenAutoFocus={(e) => e.preventDefault()}
             >
                 {searchResults.length > 0 ? (
                     <div className="max-h-72 overflow-y-auto py-1">
                         <div className="flex flex-col">
                             {searchResults.map((file) => (
-                                <FileItem 
-                                    file={file} 
-                                    variant="search" 
-                                    key={file.id} 
-                                    className="mb-0.5" 
+                                <FileItem
+                                    file={file}
+                                    variant="search"
+                                    key={file.id}
+                                    className="mb-0.5"
                                 />
                             ))}
                         </div>
@@ -107,12 +105,12 @@ export function SearchBar() {
                 ) : (
                     <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
                         <FileText className="h-4 w-4" />
-                        <span>No files found</span>
+                        <span>{t('components.search_no_results')}</span>
                     </div>
                 )}
                 {searchResults.length > 0 && (
                     <div className="border-t pt-1 pb-0.5 px-2 text-xs text-muted-foreground">
-                        {searchResults.length} {searchResults.length === 1 ? 'file' : 'files'} found
+                        {tChoice('components.search_results_count', searchResults.length, { count: searchResults.length })}
                     </div>
                 )}
             </PopoverContent>

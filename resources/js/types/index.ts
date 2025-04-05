@@ -71,6 +71,7 @@ export interface TFile {
     user_id: number;
     trash: boolean;
     shared: boolean;
+    shared_url: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -131,6 +132,9 @@ export interface PlanFeature {
     popular: boolean;
     included: boolean
     group: string;
+    plan_id: number;
     created_at: string;
     updated_at: string;
 }
+
+export type OnAction = (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => void;

@@ -7,19 +7,24 @@ import { Clock, ExternalLink, Info, QrCode, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Head, Link, router, usePoll } from '@inertiajs/react';
-import { BreadcrumbItem, Payment, Plan } from '@/types';
+import { BreadcrumbItem, Payment as PaymentType, Plan } from '@/types';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { getLocalizedField } from '@/lib/utils';
 
 const PAYMENT_TIMEOUT_MINUTES = 15;
 const QR_CODE_LOADING_DELAY_MS = 1000;
 const POLL_INTERVAL_MS = 2000;
 
 interface PaymentSbpProps {
-    payment: Payment;
+    payment: PaymentType;
     plan: Omit<Plan, 'features'>;
     qrCodeUrl: string;
 }
 
 export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps) {
+    const { t, currentLocale } = useLaravelReactI18n();
+    const locale = currentLocale();
+
     if (payment.status === "paid") {
         router.visit('/payment/success');
     }
@@ -31,16 +36,17 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
 
     useEffect(() => {
         const timer = setTimeout(() => setIsLoading(false), QR_CODE_LOADING_DELAY_MS);
-
         const interval = setInterval(() => {
             setSecondsElapsed((prev) => prev + 1);
         }, 1000);
-
         return () => {
             clearTimeout(timer);
             clearInterval(interval);
         };
     }, []);
+
+    // Use the imported function, passing locale
+    const planDescription = getLocalizedField(plan, 'description', locale) || t('payment.sbp_header_description_fallback');
 
     const formattedAmount = new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -53,28 +59,28 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'Pay via SBP',
+            title: t('payment.sbp_breadcrumb_title'),
             href: '/payment/sbp',
         },
     ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Payment via SBP" />
+            <Head title={t('payment.sbp_meta_title')} />
 
             <div className="flex h-full flex-1 flex-col">
                 <div className="bg-muted/20 px-4 py-6">
                     <div className="mx-auto flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
                         <div>
-                            <h1 className="text-2xl font-semibold">Payment via SBP</h1>
-                            <p className="text-muted-foreground text-sm">{plan.en_description || 'Order payment'}</p>
+                            <h1 className="text-2xl font-semibold">{t('payment.sbp_header_title')}</h1>
+                            <p className="text-muted-foreground text-sm">{planDescription}</p>
                         </div>
 
                         <div className="flex items-center space-x-6">
                             <div className="flex items-center space-x-2">
                                 <Receipt className="text-muted-foreground h-5 w-5" />
                                 <div>
-                                    <div className="text-muted-foreground text-xs">Order No.</div>
+                                    <div className="text-muted-foreground text-xs">{t('payment.sbp_header_order_label')}</div>
                                     <div className="font-medium">{payment.id}</div>
                                 </div>
                             </div>
@@ -82,7 +88,7 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                             <div className="flex items-center space-x-2">
                                 <Clock className="h-5 w-5 text-amber-500" />
                                 <div>
-                                    <div className="text-muted-foreground text-xs">Time to pay</div>
+                                    <div className="text-muted-foreground text-xs">{t('payment.sbp_header_timer_label')}</div>
                                     <div className="font-medium">
                                         {minutes}:{seconds.toString().padStart(2, '0')}
                                     </div>
@@ -97,29 +103,29 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                         <div className="flex flex-col justify-center space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-lg">Payment Details</CardTitle>
-                                    <CardDescription>Information about your payment</CardDescription>
+                                    <CardTitle className="text-lg">{t('payment.sbp_details_card_title')}</CardTitle>
+                                    <CardDescription>{t('payment.sbp_details_card_description')}</CardDescription>
                                 </CardHeader>
 
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Amount due:</span>
+                                            <span className="text-muted-foreground">{t('payment.sbp_details_amount_label')}</span>
                                             <span className="text-xl font-bold">{formattedAmount}</span>
                                         </div>
 
                                         <Separator />
 
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Payment method:</span>
-                                            <span>Fast Payment System (SBP)</span>
+                                            <span className="text-muted-foreground">{t('payment.sbp_details_method_label')}</span>
+                                            <span>{t('payment.sbp_details_method_name')}</span>
                                         </div>
 
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Status:</span>
+                                            <span className="text-muted-foreground">{t('payment.sbp_details_status_label')}</span>
                                             <span className="flex items-center">
                                                 <span className="mr-2 h-2 w-2 animate-pulse rounded-full bg-amber-500"></span>
-                                                Waiting for payment
+                                                {t('payment.sbp_details_status_waiting')}
                                             </span>
                                         </div>
                                     </div>
@@ -128,13 +134,13 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
 
                             <Alert>
                                 <Info className="h-4 w-4" />
-                                <AlertTitle>Payment Instructions</AlertTitle>
+                                <AlertTitle>{t('payment.sbp_instructions_alert_title')}</AlertTitle>
                                 <AlertDescription>
                                     <ol className="ml-4 list-decimal space-y-1 pt-2 text-sm">
-                                        <li>Scan the QR code with your phone camera</li>
-                                        <li>Open a bank app that supports SBP</li>
-                                        <li>Confirm the payment in your banking app</li>
-                                        <li>Wait for the transaction confirmation</li>
+                                        <li>{t('payment.sbp_instructions_step_1')}</li>
+                                        <li>{t('payment.sbp_instructions_step_2')}</li>
+                                        <li>{t('payment.sbp_instructions_step_3')}</li>
+                                        <li>{t('payment.sbp_instructions_step_4')}</li>
                                     </ol>
                                 </AlertDescription>
                             </Alert>
@@ -142,7 +148,7 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                             <Button className="w-full" variant="default" size="lg" asChild>
                                 <Link href={qrCodeUrl}>
                                     <QrCode className="mr-2 h-5 w-5" />
-                                    Open for Payment
+                                    {t('payment.sbp_button_open_payment')}
                                     <ExternalLink className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
@@ -151,8 +157,8 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                         <div className="flex items-center justify-center">
                             <Card className="w-full max-w-md">
                                 <CardHeader className="pb-2 text-center">
-                                    <CardTitle className="text-lg">Scan the QR Code</CardTitle>
-                                    <CardDescription>Use your phone camera or banking app</CardDescription>
+                                    <CardTitle className="text-lg">{t('payment.sbp_qr_card_title')}</CardTitle>
+                                    <CardDescription>{t('payment.sbp_qr_card_description')}</CardDescription>
                                 </CardHeader>
 
                                 <CardContent className="flex justify-center pt-4 pb-8">
@@ -181,7 +187,7 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                     <div className="mx-auto flex max-w-6xl items-center justify-center">
                         <div className="flex items-center space-x-2">
                             <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
-                            <span className="text-muted-foreground text-sm">Page will be refreshed automatically after paying</span>
+                            <span className="text-muted-foreground text-sm">{t('payment.sbp_footer_status_text')}</span>
                         </div>
                     </div>
                 </div>

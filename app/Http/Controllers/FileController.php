@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enum\FileTypeEnum;
+use App\Http\Resources\FileCollection;
 use App\Services\ActivityLoggerService;
 use App\Http\Resources\FileResource;
 use App\Models\File;
@@ -25,10 +26,26 @@ class FileController extends Controller
         $currentPage = request()->input('page', 1);
         $perPage = request()->input('per_page', 10);
 
+        $sort = request()->input('sort', 'date'); // date, alphabet, size
+        $direction = request()->input('direction', 'desc');
+
         $query = File::query()
             ->where('user_id', Auth::id())
             ->when($trash, fn($q) => $q->onlyTrashed())
             ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE));
+
+        switch ($sort) {
+            case 'alphabet':
+                $query->orderBy('name', $direction);
+                break;
+            case 'size':
+                $query->orderBy('size', $direction);
+                break;
+            case 'date':
+            default:
+                $query->orderBy('created_at', $direction);
+                break;
+        }
 
         $manualPartialLoad = request()->header('partial-load');
 
@@ -166,17 +183,17 @@ class FileController extends Controller
             $uploadedFile = $request->file('file');
             $mimeType = $uploadedFile->getMimeType();
 
-            $fileType = \App\Enum\FileTypeEnum::OTHER;
+            $fileType = FileTypeEnum::OTHER;
             if (str_starts_with($mimeType, 'image/')) {
-                $fileType = \App\Enum\FileTypeEnum::IMAGE;
+                $fileType = FileTypeEnum::IMAGE;
             } elseif (str_starts_with($mimeType, 'video/')) {
-                $fileType = \App\Enum\FileTypeEnum::VIDEO;
+                $fileType = FileTypeEnum::VIDEO;
             } elseif (str_starts_with($mimeType, 'audio/')) {
-                $fileType = \App\Enum\FileTypeEnum::AUDIO;
+                $fileType = FileTypeEnum::AUDIO;
             } else {
                 $extension = strtolower($uploadedFile->getClientOriginalExtension());
                 if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'])) {
-                    $fileType = \App\Enum\FileTypeEnum::FILE;
+                    $fileType = FileTypeEnum::FILE;
                 }
             }
 

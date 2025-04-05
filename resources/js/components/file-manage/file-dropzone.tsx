@@ -1,5 +1,6 @@
 import { DropEvent, FileRejection, useDropzone } from 'react-dropzone';
 import React, { useEffect } from 'react';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 interface FileDropzoneProps {
     children: React.ReactNode;
@@ -10,6 +11,7 @@ interface FileDropzoneProps {
 }
 
 export function FileDropzone({ onDrop, maxFiles, maxSize, children, openFileDialogRef }: FileDropzoneProps) {
+    const {t} = useLaravelReactI18n();
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         maxFiles,
         maxSize,
@@ -38,7 +40,7 @@ export function FileDropzone({ onDrop, maxFiles, maxSize, children, openFileDial
                 <svg className="mb-4 h-12 w-12 animate-bounce text-accent-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
                 </svg>
-                <p className="text-lg font-semibold text-accent-foreground">Drag and drop your files here</p>
+                <p className="text-lg font-semibold text-accent-foreground">{t('file_manage.dropzone_label')}</p>
             </div>
         </div>
     );

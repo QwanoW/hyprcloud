@@ -3,19 +3,15 @@
 use App\Http\Controllers\AppController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\FileController;
+use App\Http\Resources\FileResource;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
 use App\Models\File;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
-
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('files', \App\Http\Controllers\FileController::class)->except(['show', 'index']);
+    Route::resource('files', FileController::class)->except(['show', 'index']);
     Route::post('files/delete-multiple', [FileController::class, 'destroyMultiple'])->name('files.destroyMultiple');
     Route::post('files/delete-permanently-multiple', [FileController::class, 'destroyPermanentlyMultiple'])->name('files.destroyPermanentlyMultiple');
     Route::post('files/restore-multiple', [FileController::class, 'restoreMultiple'])->name('files.restoreMultiple');
@@ -45,5 +41,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+Route::get('/shared/{userId}/{file}', function (string $userId, File $file) {
+    if (!$file->shared) {
+        return Inertia::render('shared/forbidden');
+    }
+
+    return Inertia::render('shared/index', ["file" => FileResource::make($file)]);
+})->name('shared');
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/home.php';

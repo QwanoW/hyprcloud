@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 export default function ConfirmPassword() {
+    const { t } = useLaravelReactI18n();
     const { data, setData, post, processing, errors, reset } = useForm<Required<{ password: string }>>({
         password: '',
     });
@@ -24,10 +26,10 @@ export default function ConfirmPassword() {
 
     return (
         <AuthLayout
-            title="Confirm your password"
-            description="This is a secure area of the application. Please confirm your password before continuing."
+            title={t('auth.confirm_password_title')}
+            description={t('auth.confirm_password_description')}
         >
-            <Head title="Confirm password" />
+            <Head title={t('auth.confirm_password_meta_title')} />
 
             <form onSubmit={submit}>
                 <div className="space-y-6">
@@ -50,7 +52,7 @@ export default function ConfirmPassword() {
                     <div className="flex items-center">
                         <Button className="w-full" disabled={processing}>
                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Confirm password
+                            {t('auth.confirm_password_button')}
                         </Button>
                     </div>
                 </div>

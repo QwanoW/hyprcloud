@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class FileResource extends JsonResource
 {
@@ -27,6 +26,7 @@ class FileResource extends JsonResource
             'user_id' => $this->user_id,
             'trash' => $this->trash,
             'shared' => $this->shared,
+            'shared_url' => $this->shared ? route('shared', ['userId' => $this->user_id, 'file' => $this->id]) : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
