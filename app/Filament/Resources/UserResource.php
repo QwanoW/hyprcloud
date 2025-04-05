@@ -58,7 +58,7 @@ class UserResource extends Resource
                             ->preload(),
                         Forms\Components\Select::make('plan_id')
                             ->label('Тарифный план')
-                            ->relationship('plan', 'en_name'),
+                            ->relationship('plan', 'name_en'),
                     ])->columns(2),
             ]);
     }
@@ -73,7 +73,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('plan.en_name')
+                Tables\Columns\TextColumn::make('plan.name_en')
                     ->label('Тарифный план')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('email_verified_at')

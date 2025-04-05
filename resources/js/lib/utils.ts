@@ -99,7 +99,7 @@ export function formatFileSizeParts(size: number, locale: string): FormattedFile
 }
 
 export const getLocalizedField = (item: any, fieldPrefix: string, locale: string): string => {
-    const localizedKey = `${locale}_${fieldPrefix}`;
+    const localizedKey = `${fieldPrefix}_${locale}`;
     return item?.[localizedKey] || item?.[`${fieldPrefix}_en`] || '';
 };
 

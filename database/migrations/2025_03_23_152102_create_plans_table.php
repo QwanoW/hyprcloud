@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
-            $table->string('en_name');
-            $table->string('en_description');
-            $table->string('ru_name');
-            $table->string('ru_description');
+            $table->string('name_en');
+            $table->string('description_en');
+            $table->string('name_ru');
+            $table->string('description_ru');
 
             $table->string('icon');
 

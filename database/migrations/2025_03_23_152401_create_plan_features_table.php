@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('plan_features', function (Blueprint $table) {
             $table->id();
-            $table->string('ru_name');
-            $table->string('en_name');
+            $table->string('name_ru');
+            $table->string('name_en');
             $table->boolean('included')->default(false);
             $table->foreignIdFor(\App\Models\Plan::class);
             $table->boolean('popular')->default(false);

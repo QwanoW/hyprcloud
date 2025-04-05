@@ -13,93 +13,93 @@ class PlanSeeder extends Seeder
         // Define feature groups and their implementations for each plan
         $featureGroups = [
             'storage' => [
-                'Free' => ['en_name' => '2GB storage', 'ru_name' => '2 ГБ хранилище', 'popular' => true],
-                'Basic' => ['en_name' => '100GB storage', 'ru_name' => '100 ГБ хранилище', 'popular' => true],
-                'Pro' => ['en_name' => '1TB storage', 'ru_name' => '1 ТБ хранилище', 'popular' => true],
+                'Free' => ['name_en' => '2GB storage', 'name_ru' => '2 ГБ хранилище', 'popular' => true],
+                'Basic' => ['name_en' => '100GB storage', 'name_ru' => '100 ГБ хранилище', 'popular' => true],
+                'Pro' => ['name_en' => '1TB storage', 'name_ru' => '1 ТБ хранилище', 'popular' => true],
             ],
             'file_upload' => [
-                'Free' => ['en_name' => '5MB file upload limit', 'ru_name' => 'Лимит загрузки файлов 5 МБ', 'popular' => false],
-                'Basic' => ['en_name' => '15MB file upload limit', 'ru_name' => 'Лимит загрузки файлов 15 МБ', 'popular' => false],
-                'Pro' => ['en_name' => '50MB file upload limit', 'ru_name' => 'Лимит загрузки файлов 50 МБ', 'popular' => false],
+                'Free' => ['name_en' => '5MB file upload limit', 'name_ru' => 'Лимит загрузки файлов 5 МБ', 'popular' => false],
+                'Basic' => ['name_en' => '15MB file upload limit', 'name_ru' => 'Лимит загрузки файлов 15 МБ', 'popular' => false],
+                'Pro' => ['name_en' => '50MB file upload limit', 'name_ru' => 'Лимит загрузки файлов 50 МБ', 'popular' => false],
             ],
             'sharing' => [
-                'Free' => ['en_name' => 'Basic sharing', 'ru_name' => 'Базовый обмен', 'popular' => true],
-                'Basic' => ['en_name' => 'Standard sharing', 'ru_name' => 'Стандартный обмен', 'popular' => true],
-                'Pro' => ['en_name' => 'Advanced sharing', 'ru_name' => 'Расширенный обмен', 'popular' => true],
+                'Free' => ['name_en' => 'Basic sharing', 'name_ru' => 'Базовый обмен', 'popular' => true],
+                'Basic' => ['name_en' => 'Standard sharing', 'name_ru' => 'Стандартный обмен', 'popular' => true],
+                'Pro' => ['name_en' => 'Advanced sharing', 'name_ru' => 'Расширенный обмен', 'popular' => true],
             ],
             'support' => [
-                'Free' => ['en_name' => 'Community support', 'ru_name' => 'Поддержка сообщества', 'popular' => true],
-                'Basic' => ['en_name' => 'Email support', 'ru_name' => 'Поддержка по электронной почте', 'popular' => true],
-                'Pro' => ['en_name' => 'Priority support', 'ru_name' => 'Приоритетная поддержка', 'popular' => true],
+                'Free' => ['name_en' => 'Community support', 'name_ru' => 'Поддержка сообщества', 'popular' => true],
+                'Basic' => ['name_en' => 'Email support', 'name_ru' => 'Поддержка по электронной почте', 'popular' => true],
+                'Pro' => ['name_en' => 'Priority support', 'name_ru' => 'Приоритетная поддержка', 'popular' => true],
             ],
             'exports' => [
-                'Free' => ['en_name' => 'Limited exports', 'ru_name' => 'Ограниченные экспорты', 'popular' => false],
-                'Basic' => ['en_name' => 'Unlimited exports', 'ru_name' => 'Неограниченные экспорты', 'popular' => false],
-                'Pro' => ['en_name' => 'Unlimited exports', 'ru_name' => 'Неограниченные экспорты', 'popular' => false],
+                'Free' => ['name_en' => 'Limited exports', 'name_ru' => 'Ограниченные экспорты', 'popular' => false],
+                'Basic' => ['name_en' => 'Unlimited exports', 'name_ru' => 'Неограниченные экспорты', 'popular' => false],
+                'Pro' => ['name_en' => 'Unlimited exports', 'name_ru' => 'Неограниченные экспорты', 'popular' => false],
             ],
             'versioning' => [
-                'Free' => ['en_name' => 'File versioning (1 day)', 'ru_name' => 'Версионирование файлов (1 день)', 'popular' => false],
-                'Basic' => ['en_name' => 'File versioning (30 days)', 'ru_name' => 'Версионирование файлов (30 дней)', 'popular' => false],
-                'Pro' => ['en_name' => 'File versioning (unlimited)', 'ru_name' => 'Версионирование файлов (без ограничений)', 'popular' => false],
+                'Free' => ['name_en' => 'File versioning (1 day)', 'name_ru' => 'Версионирование файлов (1 день)', 'popular' => false],
+                'Basic' => ['name_en' => 'File versioning (30 days)', 'name_ru' => 'Версионирование файлов (30 дней)', 'popular' => false],
+                'Pro' => ['name_en' => 'File versioning (unlimited)', 'name_ru' => 'Версионирование файлов (без ограничений)', 'popular' => false],
             ],
             'security' => [
-                'Free' => ['en_name' => 'Standard security', 'ru_name' => 'Стандартная безопасность', 'popular' => false],
-                'Basic' => ['en_name' => 'Enhanced security', 'ru_name' => 'Усиленная безопасность', 'popular' => false],
-                'Pro' => ['en_name' => 'Enterprise-grade security', 'ru_name' => 'Корпоративный уровень безопасности', 'popular' => false],
+                'Free' => ['name_en' => 'Standard security', 'name_ru' => 'Стандартная безопасность', 'popular' => false],
+                'Basic' => ['name_en' => 'Enhanced security', 'name_ru' => 'Усиленная безопасность', 'popular' => false],
+                'Pro' => ['name_en' => 'Enterprise-grade security', 'name_ru' => 'Корпоративный уровень безопасности', 'popular' => false],
             ],
             'mobile' => [
-                'Free' => ['en_name' => 'Mobile app access', 'ru_name' => 'Доступ через мобильное приложение', 'popular' => false],
-                'Basic' => ['en_name' => 'Mobile app access', 'ru_name' => 'Доступ через мобильное приложение', 'popular' => false],
-                'Pro' => ['en_name' => 'Mobile app access', 'ru_name' => 'Доступ через мобильное приложение', 'popular' => false],
+                'Free' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
+                'Basic' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
+                'Pro' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
             ],
             'api' => [
-                'Free' => ['en_name' => 'No API access', 'ru_name' => 'Нет доступа к API', 'popular' => false, 'included' => false],
-                'Basic' => ['en_name' => 'Basic API access', 'ru_name' => 'Базовый доступ к API', 'popular' => false],
-                'Pro' => ['en_name' => 'Full API access', 'ru_name' => 'Полный доступ к API', 'popular' => false],
+                'Free' => ['name_en' => 'No API access', 'name_ru' => 'Нет доступа к API', 'popular' => false, 'included' => false],
+                'Basic' => ['name_en' => 'Basic API access', 'name_ru' => 'Базовый доступ к API', 'popular' => false],
+                'Pro' => ['name_en' => 'Full API access', 'name_ru' => 'Полный доступ к API', 'popular' => false],
             ],
             'integrations' => [
-                'Free' => ['en_name' => 'No custom integrations', 'ru_name' => 'Нет пользовательских интеграций', 'popular' => false, 'included' => false],
-                'Basic' => ['en_name' => 'Limited integrations', 'ru_name' => 'Ограниченные интеграции', 'popular' => false],
-                'Pro' => ['en_name' => 'Custom integrations', 'ru_name' => 'Пользовательские интеграции', 'popular' => true],
+                'Free' => ['name_en' => 'No custom integrations', 'name_ru' => 'Нет пользовательских интеграций', 'popular' => false, 'included' => false],
+                'Basic' => ['name_en' => 'Limited integrations', 'name_ru' => 'Ограниченные интеграции', 'popular' => false],
+                'Pro' => ['name_en' => 'Custom integrations', 'name_ru' => 'Пользовательские интеграции', 'popular' => true],
             ],
             'team' => [
-                'Free' => ['en_name' => 'No team collaboration', 'ru_name' => 'Нет командного сотрудничества', 'popular' => false, 'included' => false],
-                'Basic' => ['en_name' => 'Team collaboration (up to 3)', 'ru_name' => 'Командное сотрудничество (до 3-х)', 'popular' => true],
-                'Pro' => ['en_name' => 'Unlimited team collaboration', 'ru_name' => 'Неограниченное командное сотрудничество', 'popular' => false],
+                'Free' => ['name_en' => 'No team collaboration', 'name_ru' => 'Нет командного сотрудничества', 'popular' => false, 'included' => false],
+                'Basic' => ['name_en' => 'Team collaboration (up to 3)', 'name_ru' => 'Командное сотрудничество (до 3-х)', 'popular' => true],
+                'Pro' => ['name_en' => 'Unlimited team collaboration', 'name_ru' => 'Неограниченное командное сотрудничество', 'popular' => false],
             ],
             'account_manager' => [
-                'Free' => ['en_name' => 'No account manager', 'ru_name' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
-                'Basic' => ['en_name' => 'No account manager', 'ru_name' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
-                'Pro' => ['en_name' => 'Dedicated account manager', 'ru_name' => 'Персональный менеджер аккаунта', 'popular' => false],
+                'Free' => ['name_en' => 'No account manager', 'name_ru' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
+                'Basic' => ['name_en' => 'No account manager', 'name_ru' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
+                'Pro' => ['name_en' => 'Dedicated account manager', 'name_ru' => 'Персональный менеджер аккаунта', 'popular' => false],
             ],
         ];
 
         $plans = [
             [
-                'en_name' => 'Free',
-                'en_description' => 'Perfect for individuals just getting started',
-                'ru_name' => 'Бесплатный',
-                'ru_description' => 'Идеально для тех, кто только начинает',
+                'name_en' => 'Free',
+                'description_en' => 'Perfect for individuals just getting started',
+                'name_ru' => 'Бесплатный',
+                'description_ru' => 'Идеально для тех, кто только начинает',
                 'icon' => '🎁',
                 'monthly_usd_price' => 0,
                 'yearly_usd_price' => 0,
                 'popular' => false,
             ],
             [
-                'en_name' => 'Basic',
-                'en_description' => 'Great for professionals and small teams',
-                'ru_name' => 'Базовый',
-                'ru_description' => 'Отлично подходит для профессионалов и небольших команд',
+                'name_en' => 'Basic',
+                'description_en' => 'Great for professionals and small teams',
+                'name_ru' => 'Базовый',
+                'description_ru' => 'Отлично подходит для профессионалов и небольших команд',
                 'icon' => '⚡',
                 'monthly_usd_price' => 9,
                 'yearly_usd_price' => 90,
                 'popular' => true,
             ],
             [
-                'en_name' => 'Pro',
-                'en_description' => 'Full-featured plan for businesses of any size',
-                'ru_name' => 'Профессиональный',
-                'ru_description' => 'Полнофункциональный план для бизнеса любого масштаба',
+                'name_en' => 'Pro',
+                'description_en' => 'Full-featured plan for businesses of any size',
+                'name_ru' => 'Профессиональный',
+                'description_ru' => 'Полнофункциональный план для бизнеса любого масштаба',
                 'icon' => '💎',
                 'monthly_usd_price' => 19,
                 'yearly_usd_price' => 190,
@@ -110,10 +110,10 @@ class PlanSeeder extends Seeder
         // Create plans and add features based on groups
         foreach ($plans as $planData) {
             $plan = Plan::create([
-                'en_name' => $planData['en_name'],
-                'en_description' => $planData['en_description'],
-                'ru_name' => $planData['ru_name'],
-                'ru_description' => $planData['ru_description'],
+                'name_en' => $planData['name_en'],
+                'description_en' => $planData['description_en'],
+                'name_ru' => $planData['name_ru'],
+                'description_ru' => $planData['description_ru'],
                 'icon' => $planData['icon'],
                 'monthly_usd_price' => $planData['monthly_usd_price'],
                 'monthly_rub_price' => $planData['monthly_usd_price'] * 75,
@@ -124,14 +124,14 @@ class PlanSeeder extends Seeder
 
             // Add features from each group to this plan
             foreach ($featureGroups as $groupKey => $groupFeatures) {
-                $featureData = $groupFeatures[$planData['en_name']];
+                $featureData = $groupFeatures[$planData['name_en']];
 
                 // Set included to true by default unless explicitly set to false
                 $included = isset($featureData['included']) ? $featureData['included'] : true;
 
                 PlanFeature::create([
-                    'ru_name'  => $featureData['ru_name'],
-                    'en_name'  => $featureData['en_name'],
+                    'name_ru'  => $featureData['name_ru'],
+                    'name_en'  => $featureData['name_en'],
                     'plan_id'  => $plan->id,
                     'popular'  => $featureData['popular'],
                     'included' => $included,

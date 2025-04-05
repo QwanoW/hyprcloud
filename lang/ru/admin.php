@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'vacancy_management' => 'Управление вакансиями',
     // Dashboard
     'dashboard' => 'Панель управления',
     'overview' => 'Обзор',

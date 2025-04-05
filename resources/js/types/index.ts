@@ -110,10 +110,10 @@ export interface Payment {
 
 export interface Plan {
     id: number;
-    en_name: string;
-    ru_name: string;
-    en_description: string;
-    ru_description: string;
+    name_en: string;
+    name_ru: string;
+    description_en: string;
+    description_ru: string;
     icon: string;
     monthly_usd_price: number;
     monthly_rub_price: number;
@@ -127,8 +127,8 @@ export interface Plan {
 
 export interface PlanFeature {
     id: number;
-    ru_name: string;
-    en_name: string;
+    name_ru: string;
+    name_en: string;
     popular: boolean;
     included: boolean
     group: string;
@@ -138,3 +138,17 @@ export interface PlanFeature {
 }
 
 export type OnAction = (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => void;
+
+export interface Vacancy {
+    id: number;
+    title_ru: string;
+    title_en: string;
+    description_ru: string;
+    description_en: string;
+    requirements_ru: string;
+    requirements_en: string;
+    location_ru: string;
+    location_en: string;
+    is_active: boolean;
+    published_at: string;
+  }

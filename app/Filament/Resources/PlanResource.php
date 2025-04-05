@@ -29,19 +29,19 @@ class PlanResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Основная информация')
                     ->schema([
-                        Forms\Components\TextInput::make('en_name')
+                        Forms\Components\TextInput::make('name_en')
                             ->label('Название (EN)')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('ru_name')
+                        Forms\Components\TextInput::make('name_ru')
                             ->label('Название (RU)')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('en_description')
+                        Forms\Components\Textarea::make('description_en')
                             ->label('Описание (EN)')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('ru_description')
+                        Forms\Components\Textarea::make('description_ru')
                             ->label('Описание (RU)')
                             ->required()
                             ->maxLength(255),
@@ -83,10 +83,10 @@ class PlanResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('en_name')
+                Tables\Columns\TextColumn::make('name_en')
                     ->label('Название (EN)')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('ru_name')
+                Tables\Columns\TextColumn::make('name_ru')
                     ->label('Название (RU)')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('monthly_usd_price')

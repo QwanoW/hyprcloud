@@ -28,14 +28,14 @@ class PlanFeatureResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('plan_id')
-                    ->relationship('plan', 'en_name')
+                    ->relationship('plan', 'name_en')
                     ->label('План')
                     ->required(),
-                Forms\Components\TextInput::make('en_name')
+                Forms\Components\TextInput::make('name_em')
                     ->label('Название (EN)')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('ru_name')
+                Forms\Components\TextInput::make('name_ru')
                     ->label('Название (RU)')
                     ->required()
                     ->maxLength(255),
@@ -55,13 +55,13 @@ class PlanFeatureResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('plan.en_name')
+                Tables\Columns\TextColumn::make('plan.name_en')
                     ->label('План')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('en_name')
+                Tables\Columns\TextColumn::make('name_en')
                     ->label('Название (EN)')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('ru_name')
+                Tables\Columns\TextColumn::make('name_ru')
                     ->label('Название (RU)')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('included')
