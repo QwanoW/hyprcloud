@@ -88,6 +88,7 @@ return [
     'company_title' => 'Company',
     'company_link_about' => 'About Us',
     'company_link_careers' => 'Careers',
+    'company_link_testimonial' => 'Leave a Testimonial',
     'company_link_privacy' => 'Privacy Policy',
     'company_link_terms' => 'Terms of Service',
     'copyright' => '© :year Hyprcloud. All rights reserved.', // :year - плейсхолдер для года

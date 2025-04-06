@@ -15,7 +15,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('files/delete-multiple', [FileController::class, 'destroyMultiple'])->name('files.destroyMultiple');
     Route::post('files/delete-permanently-multiple', [FileController::class, 'destroyPermanentlyMultiple'])->name('files.destroyPermanentlyMultiple');
     Route::post('files/restore-multiple', [FileController::class, 'restoreMultiple'])->name('files.restoreMultiple');
-    Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
 
     // api routes
     Route::post('files/download-zip', [FileController::class, 'downloadZip'])->name('files.downloadZip');
@@ -41,6 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
+
 Route::get('/shared/{userId}/{file}', function (string $userId, File $file) {
     if (!$file->shared) {
         return Inertia::render('shared/forbidden');
@@ -52,3 +53,4 @@ Route::get('/shared/{userId}/{file}', function (string $userId, File $file) {
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/home.php';
+require __DIR__ . '/testimonials.php';

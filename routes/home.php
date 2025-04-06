@@ -8,7 +8,11 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     $plans = Plan::with('features')->get();
-    return Inertia::render('home/index', ['plans' => $plans]);
+    $testimonials = \App\Models\Testimonial::where('show_on_homepage', true)->get();
+    return Inertia::render('home/index', [
+        'plans' => $plans,
+        'testimonials' => $testimonials
+    ]);
 })->name('home');
 
 Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');

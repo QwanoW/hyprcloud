@@ -13,7 +13,8 @@ class PageController extends Controller
         $page = Page::where('slug', $slug)->firstOrFail();
         
         return Inertia::render('home/show', [
-            'page' => $page
+            'page' => $page,
+            'locale' => app()->getLocale()
         ]);
     }
 }

@@ -88,6 +88,7 @@ return [
     'company_title' => 'Компания',
     'company_link_about' => 'О нас',
     'company_link_careers' => 'Карьера',
+    'company_link_testimonial' => 'Оставить отзыв',
     'company_link_privacy' => 'Политика конфиденциальности',
     'company_link_terms' => 'Условия использования',
     'copyright' => '© :year Hyprcloud. Все права защищены.',

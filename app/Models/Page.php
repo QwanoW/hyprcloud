@@ -9,7 +9,7 @@ class Page extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['slug', 'title', 'content', 'last_updated'];
+    protected $fillable = ['slug', 'title_en', 'title_ru', 'content_en', 'content_ru', 'last_updated'];
 
     protected $casts = [
         'last_updated' => 'datetime',

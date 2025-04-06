@@ -7,8 +7,9 @@ import { Head, Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { Cloud, Lock, Search, Share2 } from 'lucide-react';
 
-export default function Home({plans}: {plans: Plan[]}) {
-    const { t } = useLaravelReactI18n();
+export default function Home({plans, testimonials}: {plans: Plan[], testimonials: any[]}) {
+    const { t, currentLocale } = useLaravelReactI18n();
+    const locale = currentLocale();
 
     return (
         <Homelayout>
@@ -164,66 +165,108 @@ export default function Home({plans}: {plans: Plan[]}) {
                     </div>
 
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                        {/* Testimonial 1 */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
-                                        {/* Инициалы можно оставить или сделать динамическими */}
-                                        <span className="text-primary font-bold">JD</span>
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-lg">{t('home.testimonials_card1_name')}</CardTitle>
-                                        <CardDescription>{t('home.testimonials_card1_role')}</CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.testimonials_card1_quote')}
-                                </p>
-                            </CardContent>
-                        </Card>
+                        {testimonials && testimonials.length > 0 ? (
+                            testimonials.map((testimonial) => {
+                                // Получаем инициалы из имени
+                                const initials = testimonial[`name_${locale}`]
+                                    .split(' ')
+                                    .map((n: string) => n[0])
+                                    .join('')
+                                    .toUpperCase();
+                                
+                                return (
+                                    <Card key={testimonial.id}>
+                                        <CardHeader>
+                                            <div className="flex items-center gap-4">
+                                                {testimonial.photo ? (
+                                                    <img 
+                                                        src={`/storage/${testimonial.photo}`} 
+                                                        alt={testimonial[`name_${locale}`]} 
+                                                        className="h-12 w-12 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
+                                                        <span className="text-primary font-bold">{initials}</span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <CardTitle className="text-lg">{testimonial[`name_${locale}`]}</CardTitle>
+                                                    <CardDescription>{testimonial[`position_${locale}`]}</CardDescription>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p className="text-muted-foreground">
+                                                {testimonial[`testimonial_${locale}`]}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })
+                        ) : (
+                            // Если нет отзывов, показываем статические из локализации
+                            <>
+                                {/* Testimonial 1 */}
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
+                                                <span className="text-primary font-bold">JD</span>
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-lg">{t('home.testimonials_card1_name')}</CardTitle>
+                                                <CardDescription>{t('home.testimonials_card1_role')}</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground">
+                                            {t('home.testimonials_card1_quote')}
+                                        </p>
+                                    </CardContent>
+                                </Card>
 
-                        {/* Testimonial 2 */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
-                                        <span className="text-primary font-bold">MS</span>
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-lg">{t('home.testimonials_card2_name')}</CardTitle>
-                                        <CardDescription>{t('home.testimonials_card2_role')}</CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.testimonials_card2_quote')}
-                                </p>
-                            </CardContent>
-                        </Card>
+                                {/* Testimonial 2 */}
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
+                                                <span className="text-primary font-bold">MS</span>
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-lg">{t('home.testimonials_card2_name')}</CardTitle>
+                                                <CardDescription>{t('home.testimonials_card2_role')}</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground">
+                                            {t('home.testimonials_card2_quote')}
+                                        </p>
+                                    </CardContent>
+                                </Card>
 
-                        {/* Testimonial 3 */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
-                                        <span className="text-primary font-bold">AT</span>
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-lg">{t('home.testimonials_card3_name')}</CardTitle>
-                                        <CardDescription>{t('home.testimonials_card3_role')}</CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.testimonials_card3_quote')}
-                                </p>
-                            </CardContent>
-                        </Card>
+                                {/* Testimonial 3 */}
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
+                                                <span className="text-primary font-bold">AT</span>
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-lg">{t('home.testimonials_card3_name')}</CardTitle>
+                                                <CardDescription>{t('home.testimonials_card3_role')}</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-muted-foreground">
+                                            {t('home.testimonials_card3_quote')}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </>
+                        )}
                     </div>
                 </div>
             </section>

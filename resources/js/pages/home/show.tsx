@@ -5,20 +5,28 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { format } from 'date-fns';
 import { Components } from 'react-markdown';
+import { getLocalizedField } from '@/lib/utils';
+import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 // Определение типа для страницы
 interface Page {
-  title: string;
-  content: string;
+  title_en: string;
+  title_ru: string;
+  content_en: string;
+  content_ru: string;
   last_updated: string | null;
 }
 
 // Определение типа пропсов
 interface ShowProps {
   page: Page;
+  locale: string;
 }
 
-export default function Show({ page }: ShowProps) {
+export default function Show({ page, locale }: ShowProps) {
+  const { t, currentLocale } = useLaravelReactI18n();
+  const currentLang = currentLocale() || locale;
+  
   // Parse the last_updated date
   const formattedDate = page.last_updated
     ? format(new Date(page.last_updated), 'MMMM d, yyyy')
@@ -49,15 +57,19 @@ export default function Show({ page }: ShowProps) {
     ),
   };
 
+  // Get localized content and title
+  const title = getLocalizedField(page, 'title', currentLang);
+  const content = getLocalizedField(page, 'content', currentLang);
+  
   // Replace Last Updated date in the content
-  const contentWithUpdatedDate = page.content.replace(
+  const contentWithUpdatedDate = content.replace(
     /Last Updated: .*$/m,
     `Last Updated: ${formattedDate}`
   );
 
   return (
     <Homelayout>
-      <Head title={page.title} />
+      <Head title={title} />
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <ReactMarkdown

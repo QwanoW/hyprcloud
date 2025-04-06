@@ -1,9 +1,10 @@
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getFormattedPrice, getLocalizedField } from '@/lib/utils';
 import { Plan } from '@/types';
-import { Button } from '@headlessui/react';
+import { Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { Check } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '../ui/button';
 
 export function PlanCard({ plan }: { plan: Plan }) {
     const { t, currentLocale } = useLaravelReactI18n();
@@ -29,7 +30,9 @@ export function PlanCard({ plan }: { plan: Plan }) {
                 </ul>
             </CardContent>
             <CardFooter>
-                <Button className="w-full">{t('home.pricing_button_get_started')}</Button>
+                <Button asChild className="w-full">
+                    <Link href={route('payment.index', { billingCycle: 'monthly', planId: plan.id })}>{t('home.pricing_button_get_started')}</Link>
+                </Button>
             </CardFooter>
         </Card>
     );

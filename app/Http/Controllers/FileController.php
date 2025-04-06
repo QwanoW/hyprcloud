@@ -88,8 +88,21 @@ class FileController extends Controller
     {
         $pathUserId = (int)substr($filepath, 0, strrpos($filepath, '/'));
         $userId = Auth::id();
-        if ($pathUserId !== $userId) {
-            abort(403);
+        $referer = $request->headers->get('referer');
+        
+        // Parse the referer URL to get just the path
+        $refererPath = parse_url($referer, PHP_URL_PATH);
+
+        if (str_starts_with($refererPath, '/shared')) {
+            $file = File::where('path', $filepath)->first();
+            
+            if (!$file || !$file->shared) {
+                abort(403);
+            }
+        } else {
+            if ($pathUserId !== $userId) {
+                abort(403);
+            }
         }
 
         $path = Storage::disk("local")->path($filepath);

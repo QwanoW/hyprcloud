@@ -6,8 +6,7 @@ import { Vacancy } from '@/types';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import Homelayout from '@/layouts/home/layout';
 import { getLocalizedField } from '@/lib/utils';
-
-
+import { MapPin, ArrowRight } from 'lucide-react';
 
 interface CareerPageProps {
   vacancies: Vacancy[];
@@ -19,36 +18,53 @@ export default function CareerPage({ vacancies }: CareerPageProps) {
 
   return (
     <Homelayout>
-      <Head title={t('Career Opportunities')} />
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">{t('Career Opportunities')}</h1>
-        <p className="text-lg mb-8">{t('Join our team and help us build the future of cloud computing')}</p>
+      <Head title={t('career.meta_title')} />
+      <div className="container mx-auto py-12 px-4 sm:px-6">
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t('career.career_opportunities')}
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            {t('career.join_team')}
+          </p>
+        </div>
         
         {vacancies.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-500">{t('No open positions at the moment')}</p>
+          <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/30 rounded-lg">
+            <p className="text-xl text-gray-500 dark:text-gray-400">{t('career.no_positions')}</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div 
+            className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
+          >
             {vacancies.map((vacancy) => (
-              <Card key={vacancy.id} className="h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle>{getLocalizedField(vacancy, 'title', locale)}</CardTitle>
-                  <p className="text-sm text-gray-500">{getLocalizedField(vacancy, 'location', locale)}</p>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="line-clamp-3 mb-4">
-                    {getLocalizedField(vacancy, 'description', locale)}
-                  </p>
-                </CardContent>
-                <div className="p-4 pt-0 mt-auto">
-                  <Link href={route('career.show', vacancy.id)}>
-                    <Button variant="outline" className="w-full">
-                      {t('View Details')}
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
+                <Card className="h-full flex flex-col overflow-hidden border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg hover:border-primary/30 dark:hover:border-primary/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl font-semibold">
+                      {getLocalizedField(vacancy, 'title', locale)}
+                    </CardTitle>
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      <MapPin size={16} className="mr-1 text-primary/70" />
+                      <span>{getLocalizedField(vacancy, 'location', locale)}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="line-clamp-3 text-gray-600 dark:text-gray-300">
+                      {getLocalizedField(vacancy, 'description', locale)}
+                    </p>
+                  </CardContent>
+                  <div className="p-4 pt-0 mt-auto">
+                    <Link href={route('career.show', vacancy.id)}>
+                      <Button 
+                        variant="outline" 
+                        className="w-full group"
+                      >
+                        <span>{t('career.view_details')}</span>
+                        <ArrowRight size={16} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
             ))}
           </div>
         )}

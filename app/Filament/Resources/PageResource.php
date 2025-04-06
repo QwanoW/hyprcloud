@@ -34,18 +34,35 @@ class PageResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('title')
-                            ->label('Заголовок')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\RichEditor::make('content')
-                            ->label('Содержание')
-                            ->required()
-                            ->columnSpanFull(),
                         Forms\Components\DateTimePicker::make('last_updated')
                             ->label('Последнее обновление')
                             ->default(now()),
                     ])->columns(2),
+                Forms\Components\Tabs::make('Локализация')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Русский')
+                            ->schema([
+                                Forms\Components\TextInput::make('title_ru')
+                                    ->label('Заголовок (RU)')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\MarkdownEditor::make('content_ru')
+                                    ->label('Содержание (RU)')
+                                    ->required()
+                                    ->columnSpanFull(),
+                            ]),
+                        Forms\Components\Tabs\Tab::make('English')
+                            ->schema([
+                                Forms\Components\TextInput::make('title_en')
+                                    ->label('Заголовок (EN)')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\MarkdownEditor::make('content_en')
+                                    ->label('Содержание (EN)')
+                                    ->required()
+                                    ->columnSpanFull(),
+                            ]),
+                    ])->columnSpanFull(),
             ]);
     }
 
@@ -56,8 +73,11 @@ class PageResource extends Resource
                 Tables\Columns\TextColumn::make('slug')
                     ->label('URL-идентификатор')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('title')
-                    ->label('Заголовок')
+                Tables\Columns\TextColumn::make('title_ru')
+                    ->label('Заголовок (RU)')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('title_en')
+                    ->label('Заголовок (EN)')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('last_updated')
                     ->label('Последнее обновление')

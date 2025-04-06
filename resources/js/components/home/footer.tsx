@@ -22,7 +22,8 @@ const linksData = {
   ],
   company: [
     { name: "About Us", key: 'about', href: "/pages/about-us" },
-    { name: "Careers", key: 'careers', href: "/pages/careers" },
+    { name: "Careers", key: 'careers', href: "/career" },
+    { name: "Leave a Testimonial", key: 'testimonial', href: "/testimonials/create" },
     { name: "Privacy Policy", key: 'privacy', href: "/pages/privacy-policy" },
     { name: "Terms of Service", key: 'terms', href: "/pages/terms-of-service" },
   ],

@@ -1,11 +1,11 @@
-import { Link, usePage } from "@inertiajs/react";
-import { Cloud, Menu } from "lucide-react";
-import { Button } from "../ui/button";
-import AppearanceToggleDropdown from "../appearance-dropdown";
-import { SharedData } from "@/types";
-import { useState } from "react";
-import TranslationsToggleDropdown from "../translations-dropdown";
-import { useLaravelReactI18n } from "laravel-react-i18n"; // Импортируем хук
+import { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { useLaravelReactI18n } from 'laravel-react-i18n'; // Импортируем хук
+import { Cloud, Menu } from 'lucide-react';
+import { useState } from 'react';
+import AppearanceToggleDropdown from '../appearance-dropdown';
+import TranslationsToggleDropdown from '../translations-dropdown';
+import { Button } from '../ui/button';
 
 export function Header() {
     const { t } = useLaravelReactI18n(); // Получаем функцию t
@@ -15,11 +15,12 @@ export function Header() {
     return (
         <header className="bg-background sticky top-0 z-40 border-b">
             <div className="container mx-auto flex h-16 items-center justify-between py-4">
-                <div className="flex items-center gap-2">
-                    <Cloud className="text-primary h-6 w-6" />
-                    {/* Название бренда */}
-                    <span className="text-xl font-bold">Hyprcloud</span>
-                </div>
+                <Link href="/">
+                    <div className="flex items-center gap-2">
+                        <Cloud className="text-primary h-6 w-6" />
+                        <span className="text-xl font-bold">Hyprcloud</span>
+                    </div>
+                </Link>
 
                 {/* Desktop Menu */}
                 <div className="hidden items-center gap-6 md:flex">
@@ -48,8 +49,7 @@ export function Header() {
                         <Button asChild>
                             <Link href="/login">{t('home.button_try_free')}</Link>
                         </Button>
-                    )
-                    }
+                    )}
                     <AppearanceToggleDropdown />
                     <TranslationsToggleDropdown />
                 </div>
@@ -95,5 +95,5 @@ export function Header() {
                 </div>
             )}
         </header>
-    )
+    );
 }
