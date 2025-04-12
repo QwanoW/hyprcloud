@@ -35,7 +35,7 @@ class PaymentResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('plan_id')
                             ->label('Тарифный план')
-                            ->relationship('plan', 'en_name')
+                            ->relationship('plan', 'name_en')
                             ->required(),
                         Forms\Components\Select::make('payment_method')
                             ->label('Метод оплаты')
@@ -75,7 +75,7 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Пользователь')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('plan.en_name')
+                Tables\Columns\TextColumn::make('plan.name_en')
                     ->label('Тарифный план')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_method')

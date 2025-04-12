@@ -62,7 +62,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
     const isYearly = data.billingCycle === 'yearly';
     const isFree = inputPlan.monthly_usd_price === 0;
 
-    const price = isYearly ? inputPlan.yearly_usd_price : inputPlan.monthly_usd_price;
+    const formattedPrice = getFormattedPrice(inputPlan, billingCycle, locale);
 
     const monthlyCostForYear = inputPlan.monthly_usd_price * 12;
     const yearlySavings = monthlyCostForYear - inputPlan.yearly_usd_price;
@@ -93,7 +93,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
                                             <CardDescription>{isYearly ? t('payment.paid_summary_card_desc_annual') : t('payment.paid_summary_card_desc_monthly')}</CardDescription>
                                         </div>
                                         <Badge variant="outline" className="bg-white/50">
-                                            {getFormattedPrice(inputPlan, billingCycle, locale)}
+                                            {formattedPrice}
                                         </Badge>
                                     </CardHeader>
                                     <CardContent className="pt-4">
@@ -265,7 +265,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
                                                     <span>{t('payment.paid_method_secure_notice')}</span>
                                                 </div>
                                                 <Button type="submit" className="w-full px-8 sm:w-auto" size="lg" disabled={processing}>
-                                                    {processing ? t('payment.paid_method_button_processing') : t('payment.paid_method_button_pay', { price: price, billingSuffix: billingSuffixText })}
+                                                    {processing ? t('payment.paid_method_button_processing') : t('payment.paid_method_button_pay', { price: formattedPrice, billingSuffix: billingSuffixText })}
                                                 </Button>
                                             </div>
                                         </form>
@@ -285,11 +285,11 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
                                                     <div>
                                                         <h3 className="font-medium">{t('payment.paid_order_summary_plan_label', { planName: planName })}</h3>
                                                         <p className="text-muted-foreground text-sm">
-                                                            {getFormattedPrice(inputPlan, billingCycle, locale)}
+                                                            {formattedPrice}
                                                         </p>
                                                     </div>
                                                     <span className="font-medium">
-                                                    {getFormattedPrice(inputPlan, billingCycle, locale)}
+                                                    {formattedPrice}
                                                     </span>
                                                 </div>
 
@@ -304,7 +304,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
                                                 <div className="flex items-center justify-between pt-2">
                                                     <span className="font-semibold">{t('payment.paid_order_summary_total_label')}</span>
                                                     <span className="text-xl font-bold">
-                                                        ${price}
+                                                        {formattedPrice}
                                                         {billingSuffixText}
                                                     </span>
                                                 </div>

@@ -20,7 +20,7 @@ class TestimonialSeeder extends Seeder
                 'position_ru' => 'Директор по маркетингу',
                 'testimonial_en' => 'Hyprcloud has transformed how our team collaborates. The secure sharing features have made it so much easier to work with clients across the globe.',
                 'testimonial_ru' => 'Hyprcloud изменил способ взаимодействия нашей команды. Функции безопасного обмена файлами значительно упростили работу с клиентами по всему миру.',
-                'photo' => 'testimonials/jane-doe.jpg',
+                'photo' => 'testimonials/jane-doe.webp',
                 'show_on_homepage' => true,
             ],
             [

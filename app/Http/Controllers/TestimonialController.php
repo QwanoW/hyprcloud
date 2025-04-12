@@ -29,7 +29,6 @@ class TestimonialController extends Controller
             'photo' => 'nullable|image|max:1024',
         ]);
 
-        // Установка русских полей пустыми, они будут заполнены администратором
         $testimonial = new Testimonial();
         $testimonial->name_en = $validated['name_en'];
         $testimonial->position_en = $validated['position_en'];
@@ -39,7 +38,6 @@ class TestimonialController extends Controller
         $testimonial->testimonial_ru = '';
         $testimonial->show_on_homepage = false;
 
-        // Загрузка фотографии, если она предоставлена
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('testimonials', 'public');
             $testimonial->photo = $path;

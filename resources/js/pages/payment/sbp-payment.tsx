@@ -9,7 +9,7 @@ import QRCode from 'react-qr-code';
 import { Head, Link, router, usePoll } from '@inertiajs/react';
 import { BreadcrumbItem, Payment as PaymentType, Plan } from '@/types';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { getLocalizedField } from '@/lib/utils';
+import { getFormattedPrice, getLocalizedField } from '@/lib/utils';
 
 const PAYMENT_TIMEOUT_MINUTES = 15;
 const QR_CODE_LOADING_DELAY_MS = 1000;
@@ -45,13 +45,8 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
         };
     }, []);
 
-    // Use the imported function, passing locale
+    const formattedPrice = getFormattedPrice(plan, payment.billing_cycle, locale)
     const planDescription = getLocalizedField(plan, 'description', locale) || t('payment.sbp_header_description_fallback');
-
-    const formattedAmount = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(plan.monthly_usd_price || 0);
 
     const timeRemaining = Math.max(0, PAYMENT_TIMEOUT_MINUTES * 60 - secondsElapsed);
     const minutes = Math.floor(timeRemaining / 60);
@@ -111,7 +106,7 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                                     <div className="space-y-4">
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">{t('payment.sbp_details_amount_label')}</span>
-                                            <span className="text-xl font-bold">{formattedAmount}</span>
+                                            <span className="text-xl font-bold">{formattedPrice}</span>
                                         </div>
 
                                         <Separator />

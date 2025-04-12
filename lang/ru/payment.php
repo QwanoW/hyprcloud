@@ -42,14 +42,26 @@ return [
     'paid_method_sbp_alert_description' => 'После отправки вы получите QR-код для сканирования в вашем банковском приложении.',
     'paid_method_secure_notice' => 'Ваша платежная информация защищена',
     'paid_method_button_processing' => 'Обработка...',
-    'paid_method_button_pay' => 'Оплатить $:price:billingSuffix',
+    'paid_method_button_pay' => 'Оплатить :price:billingSuffix',
 
     // Paid Plan: Order Summary Card
     'paid_order_summary_title' => 'Сводка заказа',
     'paid_order_summary_plan_label' => 'План :planName',
     'paid_order_summary_discount_label' => 'Годовая скидка (:percentage%)',
     'paid_order_summary_total_label' => 'Итого',
-    'paid_order_summary_tax_notice' => 'Налоги рассчитываются на основе вашего местоположения',
+    'paid_order_summary_agreement_prefix' => 'Совершая эту покупку, вы соглашаетесь с нашими ',
+    'paid_order_summary_terms_link_text' => 'Условиями использования',
+    'paid_order_summary_agreement_suffix' => ' и разрешаете нам списывать средства с вашего способа оплаты на :billingFrequency основе до момента отмены.',
+    'billing_frequency_yearly' => 'ежегодной',
+    'billing_frequency_monthly' => 'ежемесячной',
+
+    // Paid Plan: Billing Info Card
+    'paid_billing_info_title' => 'Платежная информация',
+    'paid_billing_info_first_charge' => 'Первый платеж: моментальный',
+    'paid_billing_info_anytime' => 'Вы можете повысить или понизить тариф в любое время',
+    'paid_billing_info_guarantee' => '14-дневная гарантия возврата денег',
+    'paid_billing_info_help_prefix' => 'Нужна помощь? ',
+    'paid_billing_info_support_link_text' => 'Свяжитесь с нашей службой поддержки',
 
     // Free Plan: Summary Card
     'free_summary_card_title' => 'Бесплатный план',
@@ -58,6 +70,9 @@ return [
     'free_summary_card_button' => 'Подтвердить переход на бесплатный план',
     'free_summary_card_button_processing' => 'Обработка...',
     'free_summary_card_change_plan_link' => '← Изменить план',
+
+    // Footer Security Notice
+    'footer_security_notice' => 'Все платежи безопасны и зашифрованы с использованием технологии SSL',
 
     // Free Plan: Downgrade Alert
     'free_downgrade_alert_title' => 'Внимание: Понижение плана',
@@ -68,6 +83,19 @@ return [
     'success_description' => 'Ваш план был успешно обновлен до :planName.',
     'success_button_dashboard' => 'Перейти в панель управления',
     'success_receipt_notice' => 'Квитанция была отправлена на вашу электронную почту.',
+    
+    // Success Page
+    'success_meta_title' => 'Оплата успешно выполнена',
+    'success_breadcrumb_manage_plan' => 'Управление планом',
+    'success_breadcrumb_success' => 'Успешная оплата',
+    'success_card_title' => 'Оплата прошла успешно!',
+    'success_card_description' => 'Ваш платеж был успешно обработан, и ваш план был обновлен.',
+    'success_alert_title' => 'Поздравляем с переходом на план :planName!',
+    'success_alert_description' => 'Вы успешно активировали план :planName. Теперь вы можете пользоваться всеми его преимуществами.',
+    'success_current_plan_badge' => 'Ваш текущий план: :planName',
+    'success_redirect_text' => 'Перенаправление через :countdown секунд',
+    'success_redirect_progress_label' => 'Осталось :countdown сек',
+    'success_button_dashboard_now' => 'Перейти в панель управления сейчас',
 
     // Error State
     'error_title' => 'Ошибка оплаты',
@@ -76,17 +104,44 @@ return [
     'error_button_support' => 'Связаться с поддержкой',
     'error_details_label' => 'Детали ошибки:',
 
-    // SBP Payment State
-    'sbp_title' => 'Оплата через СБП',
-    'sbp_description' => 'Отсканируйте QR-код в вашем банковском приложении для завершения платежа.',
-    'sbp_qr_alt' => 'QR-код для оплаты через СБП',
-    'sbp_status_waiting' => 'Ожидание платежа...',
-    'sbp_status_processing' => 'Обработка платежа...',
-    'sbp_status_completed' => 'Платеж завершен!',
-    'sbp_status_failed' => 'Платеж не удался',
-    'sbp_button_cancel' => 'Отменить и вернуться',
-    'sbp_button_check' => 'Проверить статус платежа',
-    'sbp_expiry_notice' => 'QR-код действителен в течение :minutes минут',
+         // ====================================
+    // SBP Payment Page (QR Code)
+    // ====================================
+
+    'sbp_meta_title' => 'Оплата через СБП',
+    'sbp_breadcrumb_title' => 'Оплата через СБП',
+
+    // Header Section (SBP)
+    'sbp_header_title' => 'Оплата через СБП',
+    'sbp_header_description_fallback' => 'Оплата заказа',
+    'sbp_header_order_label' => 'Заказ №',
+    'sbp_header_timer_label' => 'Время на оплату',
+
+    // Payment Details Card (SBP)
+    'sbp_details_card_title' => 'Детали платежа',
+    'sbp_details_card_description' => 'Информация о вашем платеже',
+    'sbp_details_amount_label' => 'Сумма к оплате:',
+    'sbp_details_method_label' => 'Способ оплаты:',
+    'sbp_details_method_name' => 'Система быстрых платежей (СБП)',
+    'sbp_details_status_label' => 'Статус:',
+    'sbp_details_status_waiting' => 'Ожидание оплаты',
+
+    // Instructions Alert (SBP)
+    'sbp_instructions_alert_title' => 'Инструкции по оплате',
+    'sbp_instructions_step_1' => 'Отсканируйте QR-код камерой телефона',
+    'sbp_instructions_step_2' => 'Откройте банковское приложение с поддержкой СБП',
+    'sbp_instructions_step_3' => 'Подтвердите платёж в банковском приложении',
+    'sbp_instructions_step_4' => 'Дождитесь подтверждения транзакции',
+
+    // Button (SBP)
+    'sbp_button_open_payment' => 'Открыть для оплаты',
+
+    // QR Code Card (SBP)
+    'sbp_qr_card_title' => 'Отсканируйте QR-код',
+    'sbp_qr_card_description' => 'Используйте камеру телефона или банковское приложение',
+
+    // Footer Status (SBP)
+    'sbp_footer_status_text' => 'Страница обновится автоматически после оплаты',
 
     // Promo Code
     'promo_code_label' => 'Промокод',

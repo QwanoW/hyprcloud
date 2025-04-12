@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Str;
 use App\Enum\FileTypeEnum;
 use App\Http\Resources\FileCollection;
 use App\Services\ActivityLoggerService;
@@ -113,21 +114,19 @@ class FileController extends Controller
         return response()->file($path);
     }
 
-
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'file|max:2097152',
         ]);
-
+    
         $user = Auth::user();
-
+    
         foreach ($request->file('files') as $uploadedFile) {
             $mimeType = $uploadedFile->getMimeType();
-
             $fileType = FileTypeEnum::OTHER;
-
+    
             if (str_starts_with($mimeType, 'image/')) {
                 $fileType = FileTypeEnum::IMAGE;
             } elseif (str_starts_with($mimeType, 'video/')) {
@@ -140,9 +139,12 @@ class FileController extends Controller
                     $fileType = FileTypeEnum::FILE;
                 }
             }
-
-            $path = $uploadedFile->store($user->id, 'local');
-
+    
+            $extension = $uploadedFile->getClientOriginalExtension();
+            $fileName = Str::random(40) . '.' . $extension;
+            
+            $path = $uploadedFile->storeAs($user->id, $fileName, 'local');
+    
             $file = File::create([
                 'user_id' => $user->id,
                 'name' => $uploadedFile->getClientOriginalName(),
@@ -150,16 +152,17 @@ class FileController extends Controller
                 'size' => $uploadedFile->getSize(),
                 'path' => $path,
             ]);
-
+    
             ActivityLoggerService::logFileUpload(
                 $file->id,
                 $file->name,
                 $file->size
             );
         }
-
+    
         return back();
     }
+    
 
     public function update(Request $request, $id): RedirectResponse
     {
@@ -224,8 +227,7 @@ class FileController extends Controller
         return back();
     }
 
-    public
-    function destroy($id): RedirectResponse
+    public function destroy($id): RedirectResponse
     {
         $file = File::findOrFail($id);
 

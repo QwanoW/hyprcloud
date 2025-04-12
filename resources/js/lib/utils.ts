@@ -103,7 +103,7 @@ export const getLocalizedField = (item: any, fieldPrefix: string, locale: string
     return item?.[localizedKey] || item?.[`${fieldPrefix}_en`] || '';
 };
 
-export const getFormattedPrice = (plan: Plan, cycle: 'monthly' | 'yearly', locale: string): string => {
+export const getFormattedPrice = (plan: Plan | Omit<Plan, "features">, cycle: 'monthly' | 'yearly', locale: string): string => {
     let price: number;
     let currency: string;
     let priceLocale: string;

@@ -44,4 +44,5 @@ return [
     // --- AppSidebar Component ---
     'sidebar_nav_label_main' => 'Main',
     'sidebar_nav_label_collections' => 'Collections',
+    'sidebar_footer_admin_label' => 'Admin dashboard'
 ];

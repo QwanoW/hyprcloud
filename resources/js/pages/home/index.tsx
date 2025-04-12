@@ -82,7 +82,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
 
             {/* Features Section */}
             <section id="features" className="bg-muted/50 py-20">
-                <div className="container mx-auto">
+                <div className="container mx-auto px-4">
                     <div className="mb-16 text-center">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{t('home.features_title')}</h2>
                         <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">
@@ -164,7 +164,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3 px-4">
                         {testimonials && testimonials.length > 0 ? (
                             testimonials.map((testimonial) => {
                                 // Получаем инициалы из имени
@@ -273,7 +273,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
 
             {/* Pricing Section */}
             <section id="pricing" className="bg-muted/50 py-20">
-                <div className="container mx-auto">
+                <div className="container mx-auto px-4">
                     <div className="mb-16 text-center">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{t('home.pricing_title')}</h2>
                         <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">{t('home.pricing_description')}</p>

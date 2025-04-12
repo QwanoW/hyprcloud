@@ -20,7 +20,6 @@ export default function PaymentSuccess() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('payment.success_breadcrumb_manage_plan'), href: '/manage-plan' },
-        { title: t('payment.success_breadcrumb_payment'), href: '/payment' },
         { title: t('payment.success_breadcrumb_success'), href: '/payment/success' },
     ];
 
