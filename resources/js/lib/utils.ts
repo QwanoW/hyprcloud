@@ -98,6 +98,7 @@ export function formatFileSizeParts(size: number, locale: string): FormattedFile
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getLocalizedField = (item: any, fieldPrefix: string, locale: string): string => {
     const localizedKey = `${fieldPrefix}_${locale}`;
     return item?.[localizedKey] || item?.[`${fieldPrefix}_en`] || '';

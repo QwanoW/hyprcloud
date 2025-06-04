@@ -2,12 +2,13 @@ import { PlanCard } from '@/components/home/plan-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Homelayout from '@/layouts/home/layout';
-import { Plan } from '@/types';
+import { getLocalizedField } from '@/lib/utils';
+import { Plan, Testimonial } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { Cloud, Lock, Search, Share2 } from 'lucide-react';
 
-export default function Home({plans, testimonials}: {plans: Plan[], testimonials: any[]}) {
+export default function Home({ plans, testimonials }: { plans: Plan[]; testimonials: Testimonial[] }) {
     const { t, currentLocale } = useLaravelReactI18n();
     const locale = currentLocale();
 
@@ -31,10 +32,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                     />
 
                     {/* Floating Shapes */}
-                    <div
-                        className="bg-primary/10 absolute top-[20%] left-[15%] h-16 w-16 animate-pulse rounded md:h-24 md:w-24"
-                        aria-hidden="true"
-                    />
+                    <div className="bg-primary/10 absolute top-[20%] left-[15%] h-16 w-16 animate-pulse rounded md:h-24 md:w-24" aria-hidden="true" />
                     <div
                         className="bg-primary/20 absolute right-[15%] bottom-[20%] h-10 w-10 animate-pulse rounded-full delay-700 md:h-16 md:w-16"
                         aria-hidden="true"
@@ -63,9 +61,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                         {t('home.hero_title')}
                     </h1>
 
-                    <p className="text-muted-foreground relative z-10 mt-6 max-w-[600px] md:text-xl">
-                        {t('home.hero_description')}
-                    </p>
+                    <p className="text-muted-foreground relative z-10 mt-6 max-w-[600px] md:text-xl">{t('home.hero_description')}</p>
 
                     <div className="relative z-10 mt-10 flex flex-col gap-4 sm:flex-row">
                         <Button asChild size="lg" className="text-base">
@@ -85,9 +81,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                 <div className="container mx-auto px-4">
                     <div className="mb-16 text-center">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{t('home.features_title')}</h2>
-                        <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">
-                            {t('home.features_description')}
-                        </p>
+                        <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">{t('home.features_description')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -100,9 +94,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                 <CardTitle>{t('home.features_card1_title')}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.features_card1_description')}
-                                </p>
+                                <p className="text-muted-foreground">{t('home.features_card1_description')}</p>
                             </CardContent>
                         </Card>
 
@@ -115,9 +107,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                 <CardTitle>{t('home.features_card2_title')}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.features_card2_description')}
-                                </p>
+                                <p className="text-muted-foreground">{t('home.features_card2_description')}</p>
                             </CardContent>
                         </Card>
 
@@ -130,9 +120,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                 <CardTitle>{t('home.features_card3_title')}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.features_card3_description')}
-                                </p>
+                                <p className="text-muted-foreground">{t('home.features_card3_description')}</p>
                             </CardContent>
                         </Card>
 
@@ -145,9 +133,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                 <CardTitle>{t('home.features_card4_title')}</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-muted-foreground">
-                                    {t('home.features_card4_description')}
-                                </p>
+                                <p className="text-muted-foreground">{t('home.features_card4_description')}</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -159,29 +145,27 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                 <div className="container mx-auto">
                     <div className="mb-16 text-center">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{t('home.testimonials_title')}</h2>
-                        <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">
-                            {t('home.testimonials_description')}
-                        </p>
+                        <p className="text-muted-foreground mx-auto mt-4 max-w-[700px] text-xl">{t('home.testimonials_description')}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3 px-4">
+                    <div className="grid grid-cols-1 gap-8 px-4 md:grid-cols-3">
                         {testimonials && testimonials.length > 0 ? (
                             testimonials.map((testimonial) => {
                                 // Получаем инициалы из имени
-                                const initials = testimonial[`name_${locale}`]
+                                const initials = getLocalizedField(testimonial, 'name', locale)
                                     .split(' ')
                                     .map((n: string) => n[0])
                                     .join('')
                                     .toUpperCase();
-                                
+
                                 return (
                                     <Card key={testimonial.id}>
                                         <CardHeader>
                                             <div className="flex items-center gap-4">
                                                 {testimonial.photo ? (
-                                                    <img 
-                                                        src={`/storage/${testimonial.photo}`} 
-                                                        alt={testimonial[`name_${locale}`]} 
+                                                    <img
+                                                        src={`/storage/${testimonial.photo}`}
+                                                        alt={getLocalizedField(testimonial, 'name', locale)}
                                                         className="h-12 w-12 rounded-full object-cover"
                                                     />
                                                 ) : (
@@ -190,15 +174,13 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <CardTitle className="text-lg">{testimonial[`name_${locale}`]}</CardTitle>
-                                                    <CardDescription>{testimonial[`position_${locale}`]}</CardDescription>
+                                                    <CardTitle className="text-lg">{getLocalizedField(testimonial, 'name', locale)}</CardTitle>
+                                                    <CardDescription>{getLocalizedField(testimonial, 'position', locale)}</CardDescription>
                                                 </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-muted-foreground">
-                                                {testimonial[`testimonial_${locale}`]}
-                                            </p>
+                                            <p className="text-muted-foreground">{getLocalizedField(testimonial, 'testimonial', locale)}</p>
                                         </CardContent>
                                     </Card>
                                 );
@@ -220,9 +202,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-muted-foreground">
-                                            {t('home.testimonials_card1_quote')}
-                                        </p>
+                                        <p className="text-muted-foreground">{t('home.testimonials_card1_quote')}</p>
                                     </CardContent>
                                 </Card>
 
@@ -240,9 +220,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-muted-foreground">
-                                            {t('home.testimonials_card2_quote')}
-                                        </p>
+                                        <p className="text-muted-foreground">{t('home.testimonials_card2_quote')}</p>
                                     </CardContent>
                                 </Card>
 
@@ -260,9 +238,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-muted-foreground">
-                                            {t('home.testimonials_card3_quote')}
-                                        </p>
+                                        <p className="text-muted-foreground">{t('home.testimonials_card3_quote')}</p>
                                     </CardContent>
                                 </Card>
                             </>
@@ -280,7 +256,9 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                     </div>
 
                     <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
-                        {plans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
+                        {plans.map((plan) => (
+                            <PlanCard key={plan.id} plan={plan} />
+                        ))}
                     </div>
                 </div>
             </section>
@@ -290,9 +268,7 @@ export default function Home({plans, testimonials}: {plans: Plan[], testimonials
                 <div className="container mx-auto">
                     <div className="bg-primary/5 mx-auto max-w-4xl rounded-2xl p-8 text-center md:p-12">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">{t('home.cta_title')}</h2>
-                        <p className="text-muted-foreground mx-auto mt-4 max-w-[600px] text-xl">
-                           {t('home.cta_description')}
-                        </p>
+                        <p className="text-muted-foreground mx-auto mt-4 max-w-[600px] text-xl">{t('home.cta_description')}</p>
                         <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
                             <Button size="lg" className="text-base">
                                 {t('home.cta_button_start')}

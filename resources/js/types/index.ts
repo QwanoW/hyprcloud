@@ -171,3 +171,17 @@ export interface Vacancy {
     is_active: boolean;
     published_at: string;
   }
+
+  export interface Testimonial {
+    id: number;
+    name_en: string;
+    name_ru: string;
+    position_en: string;
+    position_ru: string;
+    testimonial_en: string;
+    testimonial_ru: string;
+    photo?: string;
+    show_on_homepage: boolean;
+    created_at: string;
+    updated_at: string;
+  }

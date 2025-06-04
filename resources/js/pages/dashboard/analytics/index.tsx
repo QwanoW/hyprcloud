@@ -12,7 +12,7 @@ import { ArrowUpCircle, ArrowDownCircle, Trash2Icon, RotateCw, FileIcon as FileI
 import { Head } from '@inertiajs/react';
 import { BreadcrumbItem } from '@/types';
 import DashboardLayout from '@/layouts/dashboard/layout';
-import { formatTimeAgo } from '@/lib/utils';
+import { formatFileSizeParts, formatTimeAgo } from '@/lib/utils';
 import React from 'react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { useFormatFileSize } from '@/hooks/file-manage/use-format-file-size';
@@ -88,7 +88,8 @@ const getActivityIcon = (actionType: string): React.ReactNode => {
 };
 
 export default function Analytics({ fileStats, activityByDay, activitySummary, recentActivity }: AnalyticsProps) {
-    const { t } = useLaravelReactI18n();
+    const { t, currentLocale } = useLaravelReactI18n();
+    const locale = currentLocale();
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -428,7 +429,7 @@ export default function Analytics({ fileStats, activityByDay, activitySummary, r
                                                     </span>
                                                 </div>
                                                 <p className="truncate text-sm text-muted-foreground" title={activity.entity_name}>
-                                                    {activity.entity_name} ({useFormatFileSize(activity.size)})
+                                                    {activity.entity_name} ({formatFileSizeParts(activity.size, locale).value} {formatFileSizeParts(activity.size, locale).unitKey})
                                                 </p>
                                             </div>
                                         </div>

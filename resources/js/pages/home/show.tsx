@@ -24,7 +24,7 @@ interface ShowProps {
 }
 
 export default function Show({ page, locale }: ShowProps) {
-  const { t, currentLocale } = useLaravelReactI18n();
+  const { currentLocale } = useLaravelReactI18n();
   const currentLang = currentLocale() || locale;
   
   // Parse the last_updated date
@@ -34,25 +34,25 @@ export default function Show({ page, locale }: ShowProps) {
 
   // Custom components for markdown rendering
   const components: Components = {
-    h1: ({ node, ...props }) => (
+    h1: ({ ...props }) => (
       <h1 className="text-3xl font-bold mt-8 mb-4 text-gray-900" {...props} />
     ),
-    h2: ({ node, ...props }) => (
+    h2: ({ ...props }) => (
       <h2 className="text-2xl font-semibold mt-6 mb-3 text-gray-800" {...props} />
     ),
-    h3: ({ node, ...props }) => (
+    h3: ({ ...props }) => (
       <h3 className="text-xl font-medium mt-4 mb-2 text-gray-700" {...props} />
     ),
-    p: ({ node, ...props }) => (
+    p: ({ ...props }) => (
       <p className="my-3 text-gray-600 leading-relaxed" {...props} />
     ),
-    ul: ({ node, ...props }) => (
+    ul: ({ ...props }) => (
       <ul className="list-disc pl-6 my-3 text-gray-600" {...props} />
     ),
-    li: ({ node, ...props }) => (
+    li: ({ ...props }) => (
       <li className="mb-1" {...props} />
     ),
-    a: ({ node, ...props }) => (
+    a: ({ ...props }) => (
       <a className="text-blue-600 hover:text-blue-800 underline" {...props} />
     ),
   };

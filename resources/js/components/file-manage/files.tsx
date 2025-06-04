@@ -7,17 +7,15 @@ import { useFileActionMenu } from '@/hooks/file-manage/use-file-action-menu';
 import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
 import { useFileUploadQuery } from '@/hooks/file-manage/use-file-upload-query';
 import { useOutsideClick } from '@/hooks/use-outside-click';
-import { SharedData, TFile } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { TFile } from '@/types';
 import { UseInfiniteQueryResult } from '@tanstack/react-query';
-import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { useCallback, useRef } from 'react';
 
 interface FilesProps {
     variant?: 'default' | 'trash';
     withActions?: boolean;
     files: TFile[];
-    infiniteQuery?: UseInfiniteQueryResult<any, Error>;
+    infiniteQuery?: UseInfiniteQueryResult<{ data: TFile[] }, Error>;
     sortOptions?: {
         sort: string;
         direction: 'asc' | 'desc';
@@ -26,10 +24,6 @@ interface FilesProps {
 }
 
 export function Files({ variant = 'default', withActions = false, files, infiniteQuery, sortOptions, onSortChange }: FilesProps) {
-    const { t } = useLaravelReactI18n();
-    const {
-        auth: { user },
-    } = usePage<SharedData>().props;
     const { upload, toastFileRejections } = useFileUploadQuery();
     const { actions } = useFileActionMutations();
     const { selectedIds, handleSelect } = useFileSelection();
@@ -74,7 +68,7 @@ export function Files({ variant = 'default', withActions = false, files, infinit
                 actions.downloadZip(selectedIds);
             }
         },
-        [actions, selectedIds, user.id, files, disableMultipleAction, t, setActionMenuOpen],
+        [actions, selectedIds, files, disableMultipleAction, setActionMenuOpen],
     );
 
     return (

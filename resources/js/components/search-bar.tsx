@@ -34,6 +34,20 @@ export function SearchBar() {
     }, []);
 
     useEffect(() => {
+        const searchFiles = async () => {
+            try {
+                const response = await axios.post<{files: TFile[]}>(route('files.search'), {
+                    q: searchQuery
+                });
+                setSearchResults(response.data.files);
+                setIsLoading(false);
+                setOpen(response.data.files.length > 0);
+            } catch (error) {
+                console.error('Error searching files:', error);
+                setIsLoading(false);
+            }
+        };
+
         if (searchQuery.trim() === '') {
             setSearchResults([]);
             setOpen(false);
@@ -47,20 +61,6 @@ export function SearchBar() {
 
         return () => clearTimeout(debounceTimeout);
     }, [searchQuery]);
-
-    const searchFiles = async () => {
-        try {
-            const response = await axios.post<{files: TFile[]}>(route('files.search'), {
-                q: searchQuery
-            });
-            setSearchResults(response.data.files);
-            setIsLoading(false);
-            setOpen(response.data.files.length > 0);
-        } catch (error) {
-            console.error('Error searching files:', error);
-            setIsLoading(false);
-        }
-    };
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);

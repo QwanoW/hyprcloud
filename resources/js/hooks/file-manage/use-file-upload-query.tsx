@@ -19,7 +19,7 @@ export function useFileUploadQuery() {
       invalidateFileQueries();
       toast.success(t('file_manage.file_upload.uploaded'), { id: 'upload' });
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(t('file_manage.file_upload.failed'), {
         id: 'upload',
         description: error.response?.data?.message || error.message,

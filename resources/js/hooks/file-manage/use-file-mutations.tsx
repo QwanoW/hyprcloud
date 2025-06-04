@@ -23,12 +23,12 @@ export function useInvalidateFileQueries() {
   };
 }
 
-function useFileMutation<TData = any, TVariables = any>(
+function useFileMutation<TData = unknown, TVariables = unknown>(
   mutationFn: (variables: TVariables) => Promise<TData>,
   config: MutationConfig,
   options?: {
     onSuccess?: (data: TData, variables: TVariables) => void;
-    onError?: (error: any) => void;
+    onError?: (error: Error) => void;
   }
 ) {
   const { t } = useLaravelReactI18n();
@@ -46,11 +46,11 @@ function useFileMutation<TData = any, TVariables = any>(
       invalidateFileQueries();
       options?.onSuccess?.(data, variables);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const errorMessage = config.errorMessage || t('file_manage.file_actions.action_failed');
       toast.error(errorMessage, {
         id: config.toastId,
-        description: error.response?.data?.message || error.message,
+        description: (error as { response?: { data?: { message?: string } }; message: string }).response?.data?.message || error.message,
       });
       options?.onError?.(error);
     },
@@ -97,7 +97,7 @@ export function useFileActionMutations() {
     {
       onSuccess: (data, variables) => {
         if (variables.shared) {
-          const link = generateShareLink(data.file.user_id, variables.id);
+          const link = generateShareLink((data as { file: { user_id: number } }).file.user_id, variables.id);
           toast.success(<ShareToastContent link={link} />, { id: 'share' });
         } else {
           toast.success(t('file_manage.file_actions.share_cancelled'), { id: 'share' });
@@ -109,12 +109,12 @@ export function useFileActionMutations() {
   const downloadZipMutation = useMutation({
     mutationFn: fileApi.downloadZip,
     onSuccess: (data) => {
-      downloadFile(data.download_url, 'files.zip');
+      downloadFile((data as { download_url: string }).download_url, 'files.zip');
       toast.success(t('file_manage.file_actions.download_started'));
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(t('file_manage.file_actions.download_failed'), {
-        description: error.response?.data?.message || error.message,
+        description: (error as { response?: { data?: { message?: string } }; message: string }).response?.data?.message || error.message,
       });
     },
   });

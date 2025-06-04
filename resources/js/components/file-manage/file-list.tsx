@@ -14,7 +14,7 @@ interface FileListProps {
     files: TFile[];
     handleSelect: (id: number, type: 'select' | 'unselect') => void;
     containerRef: React.RefObject<HTMLDivElement | null>;
-    infiniteQuery?: UseInfiniteQueryResult<any, Error>;
+    infiniteQuery?: UseInfiniteQueryResult<{ data: TFile[] }, Error>;
     sortOptions?: {
         sort: string;
         direction: 'asc' | 'desc';
@@ -31,7 +31,7 @@ export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, so
         if (containerRef.current) {
             autoAnimate(containerRef.current);
         }
-    }, []);
+    }, [containerRef]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {

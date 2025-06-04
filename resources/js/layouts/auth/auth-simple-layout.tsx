@@ -1,8 +1,6 @@
 import AppLogoIcon from '@/components/app-logo-icon';
-import { type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
-import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 interface AuthLayoutProps {
     name?: string;

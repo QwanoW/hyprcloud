@@ -7,29 +7,6 @@ import { Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { useMemo, type PropsWithChildren } from 'react';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        url: '/settings/profile',
-        icon: null,
-    },
-    {
-        title: 'Password',
-        url: '/settings/password',
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        url: '/settings/appearance',
-        icon: null,
-    },
-    {
-        title: 'Localization',
-        url: '/settings/localization',
-        icon: null,
-    },
-];
-
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const currentPath = window.location.pathname;
     const { t } = useLaravelReactI18n();

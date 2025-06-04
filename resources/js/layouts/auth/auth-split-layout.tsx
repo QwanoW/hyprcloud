@@ -2,7 +2,6 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
-import { useLaravelReactI18n } from 'laravel-react-i18n';
 
 interface AuthLayoutProps {
     title?: string;
@@ -10,7 +9,6 @@ interface AuthLayoutProps {
 }
 
 export default function AuthSplitLayout({ children, title, description }: PropsWithChildren<AuthLayoutProps>) {
-    const { t } = useLaravelReactI18n();
     const { name } = usePage<SharedData>().props;
 
     return (
