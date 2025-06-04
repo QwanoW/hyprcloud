@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import { type BreadcrumbItem, Plan } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { BanknoteIcon, Calendar, Check, ChevronsUp, CreditCardIcon, HelpCircle, Info, Lock, ShieldCheck } from 'lucide-react';
@@ -75,7 +75,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
 
     return (
         <TooltipProvider>
-            <AppLayout breadcrumbs={breadcrumbs}>
+            <DashboardLayout breadcrumbs={breadcrumbs}>
                 <Head title={t('payment.meta_title')} />
                 <div className="flex flex-col space-y-6 p-4">
                     <HeadingSmall
@@ -431,7 +431,7 @@ export default function Payment({ plan: inputPlan, billingCycle }: { plan: Plan;
                         <span>{t('payment.footer_security_notice')}</span>
                     </div>
                 </div>
-            </AppLayout>
+            </DashboardLayout>
         </TooltipProvider>
     );
 }

@@ -25,6 +25,26 @@ return [
     'delete_dialog_confirm' => 'Удалить',
 
     // --- FileActions Component ---
+    'file_actions.deleting' => 'Удаление...',
+    'file_actions.deleted' => 'Успешно удалено',
+    'file_actions.moving_to_trash' => 'Перемещение в корзину...',
+    'file_actions.moved_to_trash' => 'Успешно перемещено в корзину',
+    'file_actions.restoring' => 'Восстановление файла(ов)...',
+    'file_actions.restored' => 'Файл(ы) успешно восстановлены',
+    'file_actions.sharing' => 'Общий доступ к файлу...',
+    'file_actions.action_failed' => 'Действие не удалось',
+
+    // --- FileUpload ---
+    'file_upload.file_too_large' => 'Файл :name слишком большой',
+    'file_upload.file_invalid_type' => 'Файл :name имеет недопустимый тип',
+    'file_upload.too_many_files' => 'Выбрано слишком много файлов',
+    'file_upload.file_rejected' => 'Файл :name был отклонен: :reason',
+    'file_upload.uploading' => 'Загрузка файлов...',
+    'file_upload.upload_success' => 'Файлы успешно загружены',
+    'file_upload.upload_failed' => 'Не удалось загрузить файлы',
+    'file_upload.name_taken' => 'Файл с именем :name уже существует',
+    'file_upload.uploaded' => 'Файл(-ы) успешно загружен(-ы)',
+    'file_upload.failed' => 'Не удалось загрузить файлы',
 
     // Default variant
     'actions_button_trash' => 'В корзину',

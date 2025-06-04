@@ -2,38 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Enum\FileTypeEnum;
-use App\Http\Resources\FileCollection;
 use App\Services\ActivityLoggerService;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 use ZipArchive;
 
 class FileController extends Controller
 {
-    public static function getPaginatedFiles(array $options = []): ?LengthAwarePaginator
+    public function index(Request $request): JsonResponse
     {
-        $trash = $options['trash'] ?? false;
-        $image = $options['image'] ?? false;
-
-        $currentPage = request()->input('page', 1);
-        $perPage = request()->input('per_page', 10);
-
-        $sort = request()->input('sort', 'date'); // date, alphabet, size
-        $direction = request()->input('direction', 'desc');
+        $perPage = $request->input('per_page', 20);
+        $sort = $request->input('sort', 'date');
+        $direction = $request->input('direction', 'desc');
 
         $query = File::query()
             ->where('user_id', Auth::id())
-            ->when($trash, fn($q) => $q->onlyTrashed())
-            ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE));
+            ->whereNull('deleted_at');
 
         switch ($sort) {
             case 'alphabet':
@@ -48,41 +40,99 @@ class FileController extends Controller
                 break;
         }
 
-        $manualPartialLoad = request()->header('partial-load');
+        $files = $query->paginate($perPage);
 
-        if (!request()->header('X-Inertia') || !$manualPartialLoad) {
-            $allResults = collect();
-
-            for ($page = 1; $page <= $currentPage; $page++) {
-                $pageResults = $query->paginate($perPage, ['*'], 'page', $page);
-                $allResults = $allResults->concat($pageResults->items());
-            }
-
-            $totalFiles = File::query()
-                ->where('user_id', Auth::id())
-                ->when($trash, fn($q) => $q->onlyTrashed())
-                ->when($image, fn($q) => $q->where('type', FileTypeEnum::IMAGE))
-                ->count();
-
-            return new LengthAwarePaginator(
-                $allResults,
-                $totalFiles,
-                $perPage,
-                $currentPage
-            );
-        }
-
-        return $query->paginate($perPage);
-    }
-
-    public function index(Request $request)
-    {
-        $files = $this->getPaginatedFiles();
-        return Inertia::render('dashboard', [
-            'files' => inertia()->merge(fn() => (new FileCollection($files))->collection),
-            'pagination' => Arr::except($files->toArray(), ['data']),
+        return response()->json([
+            'data' => FileResource::collection($files->items()),
+            'pagination' => [
+                'current_page' => $files->currentPage(),
+                'last_page' => $files->lastPage(),
+                'per_page' => $files->perPage(),
+                'total' => $files->total(),
+                'has_more_pages' => $files->hasMorePages(),
+                'next_page_url' => $files->nextPageUrl(),
+            ]
         ]);
     }
+
+    public function gallery(Request $request): JsonResponse
+    {
+        $perPage = $request->input('per_page', 20);
+        $sort = $request->input('sort', 'date');
+        $direction = $request->input('direction', 'desc');
+
+        $query = File::query()
+            ->where('user_id', Auth::id())
+            ->where('type', FileTypeEnum::IMAGE)
+            ->whereNull('deleted_at');
+
+        switch ($sort) {
+            case 'alphabet':
+                $query->orderBy('name', $direction);
+                break;
+            case 'size':
+                $query->orderBy('size', $direction);
+                break;
+            case 'date':
+            default:
+                $query->orderBy('created_at', $direction);
+                break;
+        }
+
+        $files = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => FileResource::collection($files->items()),
+            'pagination' => [
+                'current_page' => $files->currentPage(),
+                'last_page' => $files->lastPage(),
+                'per_page' => $files->perPage(),
+                'total' => $files->total(),
+                'has_more_pages' => $files->hasMorePages(),
+                'next_page_url' => $files->nextPageUrl(),
+            ]
+        ]);
+    }
+
+    public function trash(Request $request): JsonResponse
+    {
+        $perPage = $request->input('per_page', 20);
+        $sort = $request->input('sort', 'date');
+        $direction = $request->input('direction', 'desc');
+
+        $query = File::query()
+            ->where('user_id', Auth::id())
+            ->onlyTrashed();
+
+        switch ($sort) {
+            case 'alphabet':
+                $query->orderBy('name', $direction);
+                break;
+            case 'size':
+                $query->orderBy('size', $direction);
+                break;
+            case 'date':
+            default:
+                $query->orderBy('created_at', $direction);
+                break;
+        }
+
+        $files = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => FileResource::collection($files->items()),
+            'pagination' => [
+                'current_page' => $files->currentPage(),
+                'last_page' => $files->lastPage(),
+                'per_page' => $files->perPage(),
+                'total' => $files->total(),
+                'has_more_pages' => $files->hasMorePages(),
+                'next_page_url' => $files->nextPageUrl(),
+            ]
+        ]);
+    }
+
+
 
 
     public function show(Request $request, $filepath)
@@ -114,14 +164,43 @@ class FileController extends Controller
         return response()->file($path);
     }
 
-    public function store(Request $request): RedirectResponse
+
+    public function store(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        $plan = $user->plan;
+        
+        // Validate files array
         $request->validate([
             'files' => 'required|array',
-            'files.*' => 'file|max:2097152',
+            'files.*' => 'file|max:' . ($plan->max_file_size_bytes / 1024), // Convert MB to KB for Laravel validation
         ]);
-    
-        $user = Auth::user();
+        
+        $uploadedFiles = [];
+        $totalUploadSize = 0;
+        
+        // Calculate total size of files being uploaded
+        foreach ($request->file('files') as $uploadedFile) {
+            $totalUploadSize += $uploadedFile->getSize();
+        }
+        
+        // Check if user has enough storage space
+        if (!$user->hasStorageSpace($totalUploadSize)) {
+            return response()->json([
+                'message' => 'Insufficient storage space. You need ' . 
+                    number_format(($user->storage_used_bytes + $totalUploadSize - $plan->storage_limit_bytes) / (1024 * 1024), 2) . 
+                    ' MB more storage.',
+                'error' => 'storage_limit_exceeded'
+            ], 422);
+        }
+        
+        // Check file count limit
+        if ($plan->max_files_count && $user->files()->count() + count($request->file('files')) > $plan->max_files_count) {
+            return response()->json([
+                'message' => 'File count limit exceeded. Your plan allows maximum ' . $plan->max_files_count . ' files.',
+                'error' => 'file_count_limit_exceeded'
+            ], 422);
+        }
     
         foreach ($request->file('files') as $uploadedFile) {
             $mimeType = $uploadedFile->getMimeType();
@@ -158,18 +237,25 @@ class FileController extends Controller
                 $file->name,
                 $file->size
             );
+            
+            $uploadedFiles[] = $file;
         }
     
-        return back();
+        return response()->json([
+            'message' => 'Files uploaded successfully',
+            'files' => FileResource::collection($uploadedFiles)
+        ], 201);
     }
     
 
-    public function update(Request $request, $id): RedirectResponse
+
+
+    public function update(Request $request, $id): JsonResponse
     {
         $file = File::findOrFail($id);
 
         if ($file->user_id !== Auth::id()) {
-            abort(403, 'Доступ запрещен');
+            return response()->json(['error' => 'Access denied'], 403);
         }
 
         $rules = [
@@ -224,15 +310,18 @@ class FileController extends Controller
 
         $file->update($updateData);
 
-        return back();
+        return response()->json([
+            'message' => 'File updated successfully',
+            'file' => new FileResource($file)
+        ]);
     }
 
-    public function destroy($id): RedirectResponse
+    public function destroy($id): JsonResponse
     {
         $file = File::findOrFail($id);
 
         if ($file->user_id !== Auth::id()) {
-            abort(403);
+            return response()->json(['error' => 'Access denied'], 403);
         }
 
         ActivityLoggerService::logFileDelete(
@@ -243,11 +332,14 @@ class FileController extends Controller
 
         $file->delete();
 
-        return back();
+        return response()->json([
+            'message' => 'File deleted successfully'
+        ]);
     }
 
-    public
-    function destroyMultiple(Request $request): RedirectResponse
+
+
+    public function destroyMultiple(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'ids' => 'required|array',
@@ -264,7 +356,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            abort(403);
+            return response()->json(['error' => 'Access denied'], 403);
         }
 
         $files = File::whereIn('id', $ids)->get();
@@ -278,11 +370,14 @@ class FileController extends Controller
 
         $filesForDeletion->delete();
 
-        return back();
+        return response()->json([
+            'message' => 'Files moved to trash successfully'
+        ]);
     }
 
-    public
-    function destroyPermanentlyMultiple(Request $request): RedirectResponse
+
+
+    public function destroyPermanentlyMultiple(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'ids' => 'required|array',
@@ -299,7 +394,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            abort(403);
+            return response()->json(['error' => 'Access denied'], 403);
         }
 
         $fileForMovingToTrash->each(function (File $file) {
@@ -312,30 +407,14 @@ class FileController extends Controller
             $file->forceDelete();
         });
 
-        return back();
+        return response()->json([
+            'message' => 'Files permanently deleted successfully'
+        ]);
     }
 
-    public
-    function restore($id): RedirectResponse
-    {
-        $file = File::findOrFail($id);
 
-        if ($file->user_id !== Auth::id()) {
-            abort(403);
-        }
 
-        ActivityLoggerService::logFileRestore(
-            $file->id,
-            $file->name,
-            $file->size
-        );
-
-        $file->restore();
-
-        return back();
-    }
-    public
-    function restoreMultiple(Request $request): RedirectResponse
+    public function restoreMultiple(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'ids' => 'required|array',
@@ -352,7 +431,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            abort(403);
+            return response()->json(['error' => 'Access denied'], 403);
         }
 
         $filesForRestore->each(function (File $file) {
@@ -364,7 +443,9 @@ class FileController extends Controller
             $file->restore();
         });
 
-        return back();
+        return response()->json([
+            'message' => 'Files restored successfully'
+        ]);
     }
 
     public function downloadZip(Request $request)
@@ -438,7 +519,7 @@ class FileController extends Controller
             ->get();
 
         return response()->json([
-            'files' => FileResource::collection($files),
+            'data' => FileResource::collection($files),
         ]);
     }
 }

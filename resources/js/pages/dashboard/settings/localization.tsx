@@ -4,7 +4,7 @@ import { useLaravelReactI18n } from 'laravel-react-i18n';
 import HeadingSmall from '@/components/heading-small';
 import { type BreadcrumbItem } from '@/types';
 
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import TranslationsToggleTab from '@/components/translations-tabs';
 
@@ -19,7 +19,7 @@ export default function Localization() {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('settings.localization_meta_title')} />
 
             <SettingsLayout>
@@ -31,6 +31,6 @@ export default function Localization() {
                     <TranslationsToggleTab />
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

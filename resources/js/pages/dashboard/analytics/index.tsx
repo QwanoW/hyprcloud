@@ -11,7 +11,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, PieChart, 
 import { ArrowUpCircle, ArrowDownCircle, Trash2Icon, RotateCw, FileIcon as FileIconLucide, ImageIcon, Film, AudioLines, MoreHorizontal } from 'lucide-react';
 import { Head } from '@inertiajs/react';
 import { BreadcrumbItem } from '@/types';
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import { formatTimeAgo } from '@/lib/utils';
 import React from 'react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
@@ -149,7 +149,7 @@ export default function Analytics({ fileStats, activityByDay, activitySummary, r
     ].filter(item => item.value > 0);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('analytics.meta_title')} />
             <div className="flex h-full flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{t('analytics.heading_title')}</h1>
@@ -441,6 +441,6 @@ export default function Analytics({ fileStats, activityByDay, activitySummary, r
                     </Card>
                 </div>
             </div>
-        </AppLayout>
+        </DashboardLayout>
     );
 };

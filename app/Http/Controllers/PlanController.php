@@ -10,7 +10,7 @@ class PlanController extends Controller
 {
     public function index() {
         $plans = Plan::with('features')->get();
-        return Inertia::render('manage-plan/index', [
+        return Inertia::render('dashboard/manage-plan/index', [
             'plans' => $plans
         ]);
     }

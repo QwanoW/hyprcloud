@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
         Route::get('trash', [AppController::class, 'trash'])->name('trash');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
+        Route::get('usage', [AppController::class, 'usage'])->name('dashboard.usage');
     });
 });
 
@@ -44,13 +45,14 @@ Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath
 
 Route::get('/shared/{userId}/{file}', function (string $userId, File $file) {
     if (!$file->shared) {
-        return Inertia::render('shared/forbidden');
+        return Inertia::render('home/shared/forbidden');
     }
 
-    return Inertia::render('shared/index', ["file" => FileResource::make($file)]);
+    return Inertia::render('home/shared/index', ["file" => FileResource::make($file)]);
 })->name('shared');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/home.php';
 require __DIR__ . '/testimonials.php';
+require __DIR__ . '/api.php';

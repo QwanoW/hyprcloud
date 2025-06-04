@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import { Clock, ExternalLink, Info, QrCode, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
@@ -60,7 +60,7 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('payment.sbp_meta_title')} />
 
             <div className="flex h-full flex-1 flex-col">
@@ -187,6 +187,6 @@ export default function PaymentSbp({ payment, plan, qrCodeUrl }: PaymentSbpProps
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

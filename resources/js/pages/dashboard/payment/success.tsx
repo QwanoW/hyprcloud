@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import { SharedData, type BreadcrumbItem, Plan } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle, Clock, PartyPopper, ChevronRight } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function PaymentSuccess() {
     const planDescription = getLocalizedField(currentPlan, 'description', locale);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('payment.success_meta_title')} />
             <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4 py-8">
                 <div className="w-full max-w-2xl">
@@ -101,6 +101,6 @@ export default function PaymentSuccess() {
                     </Card>
                 </div>
             </div>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

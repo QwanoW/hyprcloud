@@ -130,3 +130,18 @@ export const getFormattedPrice = (plan: Plan | Omit<Plan, "features">, cycle: 'm
         return `${currency === 'RUB' ? '₽' : '$'}${price}`;
     }
 };
+
+// Download utility
+export function downloadFile(downloadUrl: string, filename: string = 'files.zip') {
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  
+// Generate share link
+export function generateShareLink(userId: number, fileId: number): string {
+return `${window.location.origin}/shared/${userId}/${fileId}`;
+}

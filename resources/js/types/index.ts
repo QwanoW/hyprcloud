@@ -50,6 +50,14 @@ export interface User {
     updated_at: string;
     roles: RolesEnum[];
     plan: Omit<Plan, 'features'>;
+    storage_used_bytes: number;
+    storage_used_gb: number;
+    storage_used_mb: number;
+    formatted_storage_used: string;
+    storage_usage_percentage: number;
+    remaining_storage_bytes: number;
+    files_count: number;
+    storage_stats_updated_at: string | null;
 }
 
 export enum FileType {
@@ -123,6 +131,17 @@ export interface Plan {
     features: PlanFeature[];
     created_at: string;
     updated_at: string;
+    storage_limit_bytes: number;
+    storage_limit_gb: number;
+    storage_limit_mb: number;
+    formatted_storage_limit: string;
+    max_file_size_bytes: number;
+    max_files_count: number | null;
+    can_share_files: boolean;
+    can_download_zip: boolean;
+    has_api_access: boolean;
+    max_shared_links: number | null;
+    shared_link_expiry_days: number | null;
 }
 
 export interface PlanFeature {

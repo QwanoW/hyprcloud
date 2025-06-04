@@ -7,7 +7,7 @@ import { getFormattedPrice, getLocalizedField } from '@/lib/utils';
 import HeadingSmall from '@/components/heading-small';
 import { type BreadcrumbItem, Plan, type SharedData } from '@/types';
 
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -67,7 +67,7 @@ export default function ManagePlan({ plans }: { plans: Plan[] }) {
     const savingsPercentage = 20;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('manage_plan.meta_title')} />
 
             <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
@@ -304,6 +304,6 @@ export default function ManagePlan({ plans }: { plans: Plan[] }) {
                     </AlertDescription>
                 </Alert>
             </div>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

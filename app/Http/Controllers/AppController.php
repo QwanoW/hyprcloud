@@ -2,41 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\FileCollection;
-use App\Http\Resources\FileResource;
-use App\Models\File;
+use App\Models\Payment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class AppController extends Controller
 {
     public function dashboard(Request $request) {
-        $files = FileController::getPaginatedFiles();
-        return Inertia::render('dashboard/index', [
-            'files' => inertia()->merge(fn() => (new FileCollection($files))->collection),
-            'pagination' => Arr::except($files->toArray(), ['data']),
-        ]);
+        return Inertia::render('dashboard/index');
     }
 
     public function gallery(Request $request) {
-        $files = FileController::getPaginatedFiles(['image' => true]);
-        return Inertia::render('dashboard/gallery', [
-            'files' => inertia()->merge(fn() => (new FileCollection($files))->collection),
-            'pagination' => Arr::except($files->toArray(), ['data']),
-        ]);
+        return Inertia::render('dashboard/gallery/index');
     }
 
     public function trash(Request $request) {
-        $files = FileController::getPaginatedFiles(['trash' => true]);
-        return Inertia::render('dashboard/trash', [
-            'files' => inertia()->merge(fn() => (new FileCollection($files))->collection),
-            'pagination' => Arr::except($files->toArray(), ['data']),
-        ]);
+        return Inertia::render('dashboard/trash/index');
     }
 
     public function analytics(Request $request) {
-        return Inertia::render('dashboard/analytics');
+        return Inertia::render('dashboard/analytics/index');
+    }
+
+    public function usage()
+    {
+        $user = Auth::user();
+        $payment = Payment::where('user_id', $user->id)->latest()->first();
+        return Inertia::render('dashboard/usage/index', [
+            'payment' => $payment,
+        ]);
     }
 }

@@ -5,7 +5,7 @@ import AppearanceTabs from '@/components/appearance-tabs';
 import HeadingSmall from '@/components/heading-small';
 import { type BreadcrumbItem } from '@/types';
 
-import AppLayout from '@/layouts/app-layout';
+import DashboardLayout from '@/layouts/dashboard/layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 export default function Appearance() {
@@ -19,7 +19,7 @@ export default function Appearance() {
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout breadcrumbs={breadcrumbs}>
             <Head title={t('settings.appearance_meta_title')} />
 
             <SettingsLayout>
@@ -31,6 +31,6 @@ export default function Appearance() {
                     <AppearanceTabs />
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

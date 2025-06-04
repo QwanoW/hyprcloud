@@ -3,6 +3,7 @@
 return [
     // --- UserMenuContent Component ---
     'user_menu_manage_plan' => 'Manage plan',
+    'user_menu_usage' => 'Usage',
     'user_menu_settings' => 'Settings',
     'user_menu_logout' => 'Log out',
 
@@ -44,5 +45,14 @@ return [
     // --- AppSidebar Component ---
     'sidebar_nav_label_main' => 'Main',
     'sidebar_nav_label_collections' => 'Collections',
-    'sidebar_footer_admin_label' => 'Admin dashboard'
+    'sidebar_footer_admin_label' => 'Admin dashboard',
+
+    // --- StorageUsage Component ---
+    'storage_usage_title' => 'Storage Usage',
+    'storage_usage_used_of' => 'used of',
+    'storage_usage_max_file_size' => 'Max file size',
+    'storage_usage_max_files' => 'Max files',
+    'storage_usage_upgrade_plan' => 'Upgrade Plan',
+    'storage_usage_storage_full' => 'Storage is full',
+    'storage_usage_storage_warning' => 'Storage is almost full'
 ];

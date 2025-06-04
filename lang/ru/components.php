@@ -3,6 +3,7 @@
 return [
     // --- UserMenuContent Component ---
     'user_menu_manage_plan' => 'Управление планом',
+    'user_menu_usage' => 'Использование',
     'user_menu_settings' => 'Настройки',
     'user_menu_logout' => 'Выйти',
 
@@ -44,5 +45,14 @@ return [
     // --- AppSidebar Component ---
     'sidebar_nav_label_main' => 'Основное',
     'sidebar_nav_label_collections' => 'Коллекции',
-        'sidebar_footer_admin_label' => 'Админ панель'
+    'sidebar_footer_admin_label' => 'Админ панель',
+
+    // --- StorageUsage Component ---
+    'storage_usage_title' => 'Использование хранилища',
+    'storage_usage_used_of' => 'использовано из',
+    'storage_usage_max_file_size' => 'Макс. размер файла',
+    'storage_usage_max_files' => 'Макс. файлов',
+    'storage_usage_upgrade_plan' => 'Улучшить план',
+    'storage_usage_storage_full' => 'Хранилище заполнено',
+    'storage_usage_storage_warning' => 'Хранилище почти заполнено'
 ];

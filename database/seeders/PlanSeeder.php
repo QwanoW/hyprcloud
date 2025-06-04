@@ -84,6 +84,14 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 0,
                 'yearly_usd_price' => 0,
                 'popular' => false,
+                'storage_limit_bytes' => 2 * 1024 * 1024 * 1024, // 2GB
+                'max_file_size_bytes' => 50 * 1024 * 1024,
+                'max_files_count' => 100,
+                'can_share_files' => true,
+                'can_download_zip' => false,
+                'has_api_access' => false,
+                'max_shared_links' => 5,
+                'shared_link_expiry_days' => 7,
             ],
             [
                 'name_en' => 'Basic',
@@ -94,6 +102,14 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 9,
                 'yearly_usd_price' => 90,
                 'popular' => true,
+                'storage_limit_bytes' => 100 * 1024 * 1024 * 1024, // 100GB
+                'max_file_size_bytes' => 1024 * 1024 * 1024,
+                'max_files_count' => 1000,
+                'can_share_files' => true,
+                'can_download_zip' => true,
+                'has_api_access' => true,
+                'max_shared_links' => 50,
+                'shared_link_expiry_days' => 30,
             ],
             [
                 'name_en' => 'Pro',
@@ -104,6 +120,14 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 19,
                 'yearly_usd_price' => 190,
                 'popular' => false,
+                'storage_limit_bytes' => 1024 * 1024 * 1024 * 1024, // 1TB
+                'max_file_size_bytes' => 100 * 1024 * 1024 * 1024,
+                'max_files_count' => null, // unlimited
+                'can_share_files' => true,
+                'can_download_zip' => true,
+                'has_api_access' => true,
+                'max_shared_links' => null, // unlimited
+                'shared_link_expiry_days' => null, // no expiry
             ],
         ];
 
@@ -120,6 +144,14 @@ class PlanSeeder extends Seeder
                 'yearly_usd_price' => $planData['yearly_usd_price'],
                 'yearly_rub_price' => $planData['yearly_usd_price'] * 75,
                 'popular' => $planData['popular'],
+                'storage_limit_bytes' => $planData['storage_limit_bytes'],
+                'max_file_size_bytes' => $planData['max_file_size_bytes'],
+                'max_files_count' => $planData['max_files_count'],
+                'can_share_files' => $planData['can_share_files'],
+                'can_download_zip' => $planData['can_download_zip'],
+                'has_api_access' => $planData['has_api_access'],
+                'max_shared_links' => $planData['max_shared_links'],
+                'shared_link_expiry_days' => $planData['shared_link_expiry_days'],
             ]);
 
             // Add features from each group to this plan

@@ -13,4 +13,8 @@ return [
 
     // Button text
     'button_go_home' => 'На главную',
+    
+    // Loading states
+    'loading_more' => 'Загружаем ещё...',
+    'no_more_items' => 'Больше элементов нет',
 ];

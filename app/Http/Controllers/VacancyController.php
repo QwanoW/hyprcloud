@@ -17,7 +17,7 @@ class VacancyController extends Controller
     {
         $vacancies = Vacancy::active()->get();
         
-        return Inertia::render('career/index', [
+        return Inertia::render('home/career/index', [
             'vacancies' => $vacancies
         ]);
     }

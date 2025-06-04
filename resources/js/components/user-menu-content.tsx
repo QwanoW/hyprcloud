@@ -4,7 +4,7 @@ import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { LogOut, Settings, FolderKanban } from 'lucide-react';
+import { LogOut, Settings, FolderKanban, BarChart3 } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -27,6 +27,12 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                     <Link className="block w-full" href={route('manage-plan.index')} as="button" prefetch onClick={cleanup}>
                         <FolderKanban className="mr-2 h-4 w-4" />
                         {t('components.user_menu_manage_plan')}
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link className="block w-full" href={route('dashboard.usage')} as="button" onClick={cleanup}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        {t('components.user_menu_usage')}
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

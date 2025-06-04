@@ -16,14 +16,14 @@ class PaymentController extends Controller
         $planId = request()->input('planId', 1);
         $plan = Plan::with('features')->findOrFail($planId);
 
-        return Inertia::render('payment/index', [
+        return Inertia::render('dashboard/payment/index', [
             'plan' => $plan,
             'billingCycle' => $billingCycle,
         ]);
     }
 
     public function success(){
-        return Inertia::render('payment/success');
+        return Inertia::render('dashboard/payment/success');
     }
 
     public function processPayment(Request $request)
@@ -79,7 +79,7 @@ class PaymentController extends Controller
         $qrCodeUrl = route('sbp.payment.confirm', ['payment' => $payment->id]);
         $plan = Plan::findOrFail($payment->plan_id);
 
-        return Inertia::render('payment/sbp-payment', [
+        return Inertia::render('dashboard/payment/sbp-payment', [
             'payment' => $payment,
             'qrCodeUrl' => $qrCodeUrl,
             'plan' => $plan,

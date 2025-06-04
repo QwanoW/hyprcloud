@@ -87,7 +87,7 @@ class AnalyticsController extends Controller
             ->limit(10)
             ->get();
         
-        return Inertia::render('dashboard/analytics', [
+        return Inertia::render('dashboard/analytics/index', [
             'fileStats' => $fileStats,
             'activityByDay' => $lastThirtyDays,
             'activitySummary' => $activitySummary,

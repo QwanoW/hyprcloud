@@ -13,4 +13,8 @@ return [
 
     // Button text
     'button_go_home' => 'Go Home',
+    
+    // Loading states
+    'loading_more' => 'Loading more...',
+    'no_more_items' => 'No more items to load',
 ];

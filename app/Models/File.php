@@ -31,5 +31,33 @@ class File extends Model
         static::forceDeleting(function (File $file) {
             Storage::disk('local')->delete($file->path);
         });
+        
+        // Update user storage statistics when files are created
+        static::created(function (File $file) {
+            if ($file->user) {
+                $file->user->updateStorageStatistics();
+            }
+        });
+        
+        // Update user storage statistics when files are updated (size might change)
+        static::updated(function (File $file) {
+            if ($file->user && $file->wasChanged('size')) {
+                $file->user->updateStorageStatistics();
+            }
+        });
+        
+        // Update user storage statistics when files are deleted
+        static::deleted(function (File $file) {
+            if ($file->user) {
+                $file->user->updateStorageStatistics();
+            }
+        });
+        
+        // Update user storage statistics when files are force deleted
+        static::forceDeleted(function (File $file) {
+            if ($file->user) {
+                $file->user->updateStorageStatistics();
+            }
+        });
     }
 }

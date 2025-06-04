@@ -14,7 +14,7 @@ class TestimonialController extends Controller
      */
     public function create()
     {
-        return Inertia::render('testimonials/create');
+        return Inertia::render('home/testimonials/create');
     }
 
     /**

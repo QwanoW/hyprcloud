@@ -1,31 +1,37 @@
+import { ActionMenu } from '@/components/file-manage/file-action-menu';
 import { FileActions } from '@/components/file-manage/file-actions';
 import { FileDropzone } from '@/components/file-manage/file-dropzone';
 import { FilesList } from '@/components/file-manage/file-list';
+import { useFileActionMutations } from '@/hooks/file-manage';
 import { useFileActionMenu } from '@/hooks/file-manage/use-file-action-menu';
-import { useFileActions } from '@/hooks/file-manage/use-file-actions';
 import { useFileSelection } from '@/hooks/file-manage/use-file-selection';
-import { useFileUpload } from '@/hooks/file-manage/use-file-upload';
-import { Pagination, SharedData, TFile } from '@/types';
-import { useCallback, useRef } from 'react';
-import { ActionMenu } from '@/components/file-manage/file-action-menu';
+import { useFileUploadQuery } from '@/hooks/file-manage/use-file-upload-query';
 import { useOutsideClick } from '@/hooks/use-outside-click';
-import axios from 'axios';
-import { toast } from 'sonner';
+import { SharedData, TFile } from '@/types';
 import { usePage } from '@inertiajs/react';
+import { UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { useCallback, useRef } from 'react';
 
 interface FilesProps {
     variant?: 'default' | 'trash';
     withActions?: boolean;
     files: TFile[];
-    pagination: Pagination;
+    infiniteQuery?: UseInfiniteQueryResult<any, Error>;
+    sortOptions?: {
+        sort: string;
+        direction: 'asc' | 'desc';
+    };
+    onSortChange?: (sort: string) => void;
 }
 
-export function Files({ variant = 'default', withActions = false, files, pagination }: FilesProps) {
+export function Files({ variant = 'default', withActions = false, files, infiniteQuery, sortOptions, onSortChange }: FilesProps) {
     const { t } = useLaravelReactI18n();
-    const {auth: {user}} = usePage<SharedData>().props;
-    const { upload } = useFileUpload();
-    const {share, cancelShare, restore, destroy, trash} = useFileActions();
+    const {
+        auth: { user },
+    } = usePage<SharedData>().props;
+    const { upload, toastFileRejections } = useFileUploadQuery();
+    const { actions } = useFileActionMutations();
     const { selectedIds, handleSelect } = useFileSelection();
 
     const disableActions = selectedIds.length === 0;
@@ -44,38 +50,32 @@ export function Files({ variant = 'default', withActions = false, files, paginat
         }
     };
 
-    const onAction = useCallback(async (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => {
-        setActionMenuOpen(false); // Close menu on action
-        if (action === 'show') {
-            if (!disableMultipleAction) {
-                const file = files.find((f) => f.id === selectedIds[0]);
-                if (file) {
-                    window.open(file.url, '_blank');
+    const onAction = useCallback(
+        async (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => {
+            setActionMenuOpen(false); // Close menu on action
+            if (action === 'show') {
+                if (!disableMultipleAction) {
+                    const file = files.find((f) => f.id === selectedIds[0]);
+                    if (file) {
+                        window.open(file.url, '_blank');
+                    }
                 }
+            } else if (action === 'share') {
+                actions.share(selectedIds[0]);
+            } else if (action === 'cancel-share') {
+                actions.cancelShare(selectedIds[0]);
+            } else if (action === 'restore') {
+                actions.restore(selectedIds);
+            } else if (action === 'delete') {
+                actions.trash(selectedIds);
+            } else if (action === 'delete-permanently') {
+                actions.destroy(selectedIds);
+            } else if (action === 'download-zip') {
+                actions.downloadZip(selectedIds);
             }
-        } else if (action === 'share') {
-            share(selectedIds[0], user.id);
-        }
-         else if (action === 'cancel-share') {
-            cancelShare(selectedIds[0]);
-        } else if (action === 'restore') {
-            restore(selectedIds);
-        } else if (action === 'delete') {
-            trash(selectedIds);
-        } else if (action === 'delete-permanently') {
-            destroy(selectedIds);
-        } else if (action === 'download-zip') {
-            const toastId = 'download-zip';
-            try {
-                toast.loading(t('file_manage.toast_zip_creating'), { id: toastId });
-                const response = await axios.post<{ download_url: string }>(route('files.downloadZip', { ids: selectedIds }));
-                window.open(response.data.download_url, '_blank');
-                toast.success(t('file_manage.toast_zip_success'), { id: toastId });
-            } catch (error) {
-                toast.error(t('file_manage.toast_zip_error'), { id: toastId });
-            }
-        }
-    }, [share, cancelShare, restore, destroy, trash, selectedIds, user.id, files, disableMultipleAction, t, setActionMenuOpen]);
+        },
+        [actions, selectedIds, user.id, files, disableMultipleAction, t, setActionMenuOpen],
+    );
 
     return (
         <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
@@ -89,17 +89,38 @@ export function Files({ variant = 'default', withActions = false, files, paginat
                     onOpenFileDialog={onOpenFileDialog}
                 />
             )}
-            <FileDropzone openFileDialogRef={openFileDialogRef} onDrop={(acceptedFiles, fileRejections) => upload(acceptedFiles, fileRejections, files)} maxFiles={10} maxSize={100 * 1024 * 1024}>
+            <FileDropzone
+                openFileDialogRef={openFileDialogRef}
+                onDrop={(acceptedFiles, fileRejections) => {
+                    if (fileRejections.length > 0) {
+                        toastFileRejections(fileRejections);
+                    }
+                    if (acceptedFiles.length > 0) {
+                        upload(acceptedFiles);
+                    }
+                }}
+                maxFiles={10}
+                maxSize={100 * 1024 * 1024}
+            >
                 <FilesList
                     handleSelect={handleSelect}
-                    pagination={pagination}
                     files={files}
                     containerRef={containerRef}
+                    infiniteQuery={infiniteQuery}
+                    sortOptions={sortOptions}
+                    onSortChange={onSortChange}
                 />
             </FileDropzone>
             {actionMenuOpen && (
                 <div ref={actionMenuRef}>
-                    <ActionMenu pos={actionMenuPos} variant={variant} disableMultipleAction={disableMultipleAction} isAlreadyShared={isAlreadyShared} onAction={onAction} onClose={() => setActionMenuOpen(false)} />
+                    <ActionMenu
+                        pos={actionMenuPos}
+                        variant={variant}
+                        disableMultipleAction={disableMultipleAction}
+                        isAlreadyShared={isAlreadyShared}
+                        onAction={onAction}
+                        onClose={() => setActionMenuOpen(false)}
+                    />
                 </div>
             )}
         </div>

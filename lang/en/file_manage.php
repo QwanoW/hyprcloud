@@ -25,6 +25,26 @@ return [
     'delete_dialog_confirm' => 'Delete',
 
     // --- FileActions Component ---
+    'file_actions.deleting' => 'Deleting...',
+    'file_actions.deleted' => 'Successfully deleted',
+    'file_actions.moving_to_trash' => 'Moving to trash...',
+    'file_actions.moved_to_trash' => 'Successfully moved to trash',
+    'file_actions.restoring' => 'Restoring file(s)...',
+    'file_actions.restored' => 'Successfully restored file(s)',
+    'file_actions.sharing' => 'Sharing file...',
+    'file_actions.action_failed' => 'Action failed',
+
+    // --- FileUpload ---
+    'file_upload.file_too_large' => 'File :name is too large',
+    'file_upload.file_invalid_type' => 'File :name has invalid type',
+    'file_upload.too_many_files' => 'Too many files selected',
+    'file_upload.file_rejected' => 'File :name was rejected: :reason',
+    'file_upload.uploading' => 'Uploading files...',
+    'file_upload.upload_success' => 'Files uploaded successfully',
+    'file_upload.upload_failed' => 'Failed to upload files',
+    'file_upload.name_taken' => 'File with name :name already exists',
+    'file_upload.uploaded' => 'Files uploaded successfully',
+    'file_upload.failed' => 'Failed to upload files',
 
     // Default variant
     'actions_button_trash' => 'Trash',
