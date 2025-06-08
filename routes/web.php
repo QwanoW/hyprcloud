@@ -67,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
 
-Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared');
+Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.access');
 Route::post('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.password');
 
 require __DIR__ . '/settings.php';
