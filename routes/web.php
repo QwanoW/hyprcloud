@@ -6,9 +6,17 @@ use App\Http\Controllers\FileController;
 use App\Http\Resources\FileResource;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\FolderController;
+use App\Http\Controllers\SharedLinkController;
 use App\Models\File;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Public routes for shared files
+Route::get('/shared/{token}', [SharedLinkController::class, 'access'])->name('shared.access');
+Route::post('/shared/{token}', [SharedLinkController::class, 'access'])->name('shared.access.password');
+Route::get('/shared/{token}/download', [SharedLinkController::class, 'download'])->name('shared.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('files', FileController::class)->except(['show', 'index']);
@@ -34,22 +42,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('dashboard')->group(function () {
         Route::get('/', [AppController::class, 'dashboard'])->name('dashboard');
+        Route::get('/files', [AppController::class, 'files'])->name('all-files');
+        Route::get('/files/{fileId}', [AppController::class, 'showFile'])->name('files.show');
         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
         Route::get('trash', [AppController::class, 'trash'])->name('trash');
+        Route::get('shared', [AppController::class, 'shared'])->name('shared');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
         Route::get('usage', [AppController::class, 'usage'])->name('dashboard.usage');
+        
+        // Collections routes
+        Route::get('collections', function () {
+            return Inertia::render('dashboard/collections/index');
+        })->name('collections.index');
+        Route::get('collections/{collection}', function ($collection) {
+            return Inertia::render('dashboard/collections/show', ['collectionId' => $collection]);
+        })->name('collections.show');
+        
+        // Folders routes
+        Route::get('folders/{folder}', function ($folder) {
+            return Inertia::render('dashboard/folders/index', ['folderId' => $folder]);
+        })->name('folders.show');
     });
 });
 
 Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
 
-Route::get('/shared/{userId}/{file}', function (string $userId, File $file) {
-    if (!$file->shared) {
-        return Inertia::render('home/shared/forbidden');
-    }
-
-    return Inertia::render('home/shared/index', ["file" => FileResource::make($file)]);
-})->name('shared');
+Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared');
+Route::post('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.password');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

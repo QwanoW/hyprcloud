@@ -1,27 +1,35 @@
 import { FileDeleteDialog } from '@/components/file-manage/file-delete-dialog';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { OnAction } from '@/types';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { RotateCw, Share, Trash } from 'lucide-react';
+import { ChevronDown, FolderPlus, Plus, RotateCw, Share, Trash } from 'lucide-react';
+import { ShareDialog } from '@/components/share-dialog';
+import { useState } from 'react';
 
 interface FilesActionsProps {
     variant: 'default' | 'trash';
     disableActions?: boolean;
     disableMultipleAction?: boolean;
-    isAlreadyShared?: boolean;
+    selectedFileIds?: number[];
     onAction: OnAction;
     onOpenFileDialog?: () => void;
+    onCreateCollection?: () => void;
+    onCreateFolder?: () => void;
 }
 
 export function FileActions({
     variant,
     disableActions = false,
     disableMultipleAction = false,
-    isAlreadyShared = false,
+    selectedFileIds = [],
     onAction,
     onOpenFileDialog,
+    onCreateCollection,
+    onCreateFolder,
 }: FilesActionsProps) {
     const { t } = useLaravelReactI18n();
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
     if (variant === 'default') {
         return (
@@ -32,19 +40,53 @@ export function FileActions({
                         {t('file_manage.actions_button_trash')}
                     </Button>
                     <Button
-                        disabled={disableActions || disableMultipleAction}
-                        onClick={() => onAction(isAlreadyShared ? 'cancel-share' : 'share')}
+                        disabled={disableActions || disableMultipleAction || selectedFileIds.length !== 1}
+                        onClick={() => setShareDialogOpen(true)}
                         variant="outline"
                         className="gap-2"
                     >
                         <Share className="h-4 w-4" />
-                        {isAlreadyShared ? t('file_manage.actions_button_cancel_share') : t('file_manage.actions_button_share')}
+                        {t('file_manage.actions_button_share')}
+                    </Button>
+                    {selectedFileIds.length === 1 && (
+                        <ShareDialog
+                            fileId={selectedFileIds[0]}
+                            open={shareDialogOpen}
+                            onOpenChange={setShareDialogOpen}
+                        />
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    {(onCreateCollection || onCreateFolder) && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="default" size="sm" className="gap-2">
+                                    <Plus className="h-4 w-4" />
+                                    {t('file_manage.actions_button_create')}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {onCreateCollection && (
+                                    <DropdownMenuItem onClick={onCreateCollection} className="gap-2">
+                                        <Plus className="h-4 w-4" />
+                                        {t('file_manage.actions_button_create_collection')}
+                                    </DropdownMenuItem>
+                                )}
+                                {onCreateFolder && (
+                                    <DropdownMenuItem onClick={onCreateFolder} className="gap-2">
+                                        <FolderPlus className="h-4 w-4" />
+                                        {t('file_manage.actions_button_create_folder')}
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    <Button onClick={onOpenFileDialog} variant="secondary" className="gap-2">
+                        <Share className="h-4 w-4" />
+                        {t('file_manage.actions_button_upload')}
                     </Button>
                 </div>
-                <Button onClick={onOpenFileDialog} variant="secondary" className="gap-2">
-                    <Share className="h-4 w-4" />
-                    {t('file_manage.actions_button_upload')}
-                </Button>
             </div>
         );
     } else if (variant === 'trash') {

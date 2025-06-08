@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fileApi } from '@/services/fileApi';
+import { fileManagerApi } from '@/services/fileManagerApi';
 import { toast } from 'sonner';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { downloadFile, generateShareLink } from '@/lib/utils';
-import { ShareToastContent } from '@/components/share-toast-content';
+import { downloadFile } from '@/lib/utils';
 
 type MutationConfig = {
   loadingMessage: string;
@@ -87,24 +87,7 @@ export function useFileActionMutations() {
     }
   );
   
-  const shareMutation = useFileMutation(
-    ({ id, shared }: { id: number; shared: boolean }) => fileApi.updateFile(id, { shared }),
-    {
-      loadingMessage: t('file_manage.file_actions.sharing'),
-      successMessage: '', // Will be set in onSuccess
-      toastId: 'share',
-    },
-    {
-      onSuccess: (data, variables) => {
-        if (variables.shared) {
-          const link = generateShareLink((data as { file: { user_id: number } }).file.user_id, variables.id);
-          toast.success(<ShareToastContent link={link} />, { id: 'share' });
-        } else {
-          toast.success(t('file_manage.file_actions.share_cancelled'), { id: 'share' });
-        }
-      },
-    }
-  );
+
   
   const downloadZipMutation = useMutation({
     mutationFn: fileApi.downloadZip,
@@ -119,28 +102,38 @@ export function useFileActionMutations() {
     },
   });
   
+  const moveMutation = useFileMutation(
+    ({ id, targetCollectionId, targetFolderId }: { id: number; targetCollectionId?: number; targetFolderId?: number }) => 
+      fileManagerApi.move(id, { collection_id: targetCollectionId, parent_folder_id: targetFolderId }),
+    {
+      loadingMessage: t('file_manage.file_actions.moving'),
+      successMessage: t('file_manage.file_actions.moved'),
+      toastId: 'move',
+    }
+  );
+  
   return {
     mutations: {
       trash: trashMutation,
       destroy: destroyMutation,
       restore: restoreMutation,
-      share: shareMutation,
       downloadZip: downloadZipMutation,
+      move: moveMutation,
     },
     actions: {
       trash: (ids: number[]) => trashMutation.mutate(ids),
       destroy: (ids: number[]) => destroyMutation.mutate(ids),
       restore: (ids: number[]) => restoreMutation.mutate(ids),
-      share: (id: number) => shareMutation.mutate({ id, shared: true }),
-      cancelShare: (id: number) => shareMutation.mutate({ id, shared: false }),
       downloadZip: (ids: number[]) => downloadZipMutation.mutate(ids),
+      move: (id: number, targetCollectionId?: number, targetFolderId?: number) => 
+        moveMutation.mutate({ id, targetCollectionId, targetFolderId }),
     },
     loading: {
       isTrashLoading: trashMutation.isPending,
       isDestroyLoading: destroyMutation.isPending,
       isRestoreLoading: restoreMutation.isPending,
-      isShareLoading: shareMutation.isPending,
       isDownloadLoading: downloadZipMutation.isPending,
+      isMoveLoading: moveMutation.isPending,
     },
   };
 }

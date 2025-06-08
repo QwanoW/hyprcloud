@@ -1,12 +1,25 @@
 import { NavItems } from '@/components/nav-items';
 import { NavUser } from '@/components/nav-user';
 import { Separator } from '@/components/ui/separator';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { collectionApi } from '@/services/collectionApi';
 import { RolesEnum, SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+import { useQuery } from '@tanstack/react-query';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { ChartSpline, Folder, Image, LayoutGrid, Trash } from 'lucide-react';
+import { ChartSpline, Image, LayoutGrid, Plus, Trash, FileSearch, Share2 } from 'lucide-react';
+import { useState } from 'react';
 import AppLogo from './app-logo';
+import { CreateCollectionModal } from './file-manage/create-collection-modal';
 import { Button } from './ui/button';
 
 export function AppSidebar() {
@@ -17,22 +30,31 @@ export function AppSidebar() {
 
     const mainNavItems: NavItem[] = [
         {
-            title: t('breadcrumb.dashboard'),
-            url: '/dashboard',
+            title: t('breadcrumb.all-files'),
+            url: '/dashboard/files',
             icon: LayoutGrid,
-            only: ['files', 'pagination'],
         },
         {
             title: t('breadcrumb.gallery'),
             url: '/dashboard/gallery',
             icon: Image,
-            only: ['files', 'pagination'],
+        },
+        {
+            title: t('breadcrumb.shared'),
+            url: '/dashboard/shared',
+            icon: Share2,
         },
         {
             title: t('breadcrumb.trash'),
             url: '/dashboard/trash',
             icon: Trash,
-            only: ['files', 'pagination'],
+        },
+    ];
+    const othersNavItems: NavItem[] = [
+        {
+            title: t('breadcrumb.search'),
+            url: '/dashboard/search',
+            icon: FileSearch,
         },
         {
             title: t('breadcrumb.analytics'),
@@ -41,18 +63,20 @@ export function AppSidebar() {
         },
     ];
 
-    const collectionNavItems: NavItem[] = [
-        {
-            title: 'Collection 1',
-            url: '/dashboard/collections/1',
-            icon: Folder,
-        },
-        {
-            title: 'Collection 2',
-            url: '/dashboard/collections/2',
-            icon: Folder,
-        },
-    ];
+    const [showCreateCollection, setShowCreateCollection] = useState(false);
+
+    // Fetch recent collections for sidebar
+    const { data: collectionsData } = useQuery({
+        queryKey: ['collections-recent'],
+        queryFn: () => collectionApi.getRecentCollections(),
+    });
+
+    const collectionNavItems: NavItem[] =
+        collectionsData?.data?.map((collection) => ({
+            title: collection.name,
+            url: `/dashboard/collections/${collection.id}`,
+            icon: collection.icon,
+        })) || [];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -71,8 +95,20 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavItems label={t('components.sidebar_nav_label_main')} items={mainNavItems} />
                 <Separator className="my-2" />
-                <NavItems label={t('components.sidebar_nav_label_collections')} items={collectionNavItems} />
+                <NavItems label={t('breadcrumb.others')} items={othersNavItems} />
+                <Separator className="my-2" />
+                <div>
+                    <div className='px-2 flex justify-between items-center'>
+                        <SidebarGroupLabel>{t('components.sidebar_nav_label_collections')}</SidebarGroupLabel>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowCreateCollection(true)}>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <NavItems items={collectionNavItems} />
+                </div>
             </SidebarContent>
+
+            <CreateCollectionModal open={showCreateCollection} onOpenChange={setShowCreateCollection} />
 
             <SidebarFooter>
                 <NavUser />

@@ -2,9 +2,10 @@ import { FileItem } from '@/components/file-manage/file-item';
 import { FileSort } from '@/components/file-manage/file-sort';
 import { ViewModeSwitcher } from '@/components/file-manage/view-mode-switcher';
 import { cn } from '@/lib/utils';
+import { FileManagerIndexResponse } from '@/services/fileManagerApi';
 import { TFile } from '@/types';
 import autoAnimate from '@formkit/auto-animate';
-import { UseInfiniteQueryResult } from '@tanstack/react-query';
+import { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,18 +15,27 @@ interface FileListProps {
     files: TFile[];
     handleSelect: (id: number, type: 'select' | 'unselect') => void;
     containerRef: React.RefObject<HTMLDivElement | null>;
-    infiniteQuery?: UseInfiniteQueryResult<{ data: TFile[] }, Error>;
+    infiniteQuery?: UseInfiniteQueryResult<InfiniteData<FileManagerIndexResponse, unknown>, Error>;
     sortOptions?: {
         sort: string;
         direction: 'asc' | 'desc';
     };
     onSortChange?: (sort: string) => void;
+    onFileDoubleClick?: (file: TFile) => void;
 }
 
-export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, sortOptions, onSortChange }: FileListProps) => {
+export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, sortOptions, onSortChange, onFileDoubleClick }: FileListProps) => {
     const { t } = useLaravelReactI18n();
     const [viewMode, setViewMode] = useState<'list' | 'cards'>(() => (localStorage.getItem('viewMode') as 'list' | 'cards') || 'list');
+    const [previousFiles, setPreviousFiles] = useState<TFile[]>([]);
     const loadMoreRef = useRef<HTMLDivElement>(null);
+
+    // Save previous files when new files are loaded
+    useEffect(() => {
+        if (files.length > 0 && !infiniteQuery?.isFetchingNextPage) {
+            setPreviousFiles(files);
+        }
+    }, [files, infiniteQuery?.isFetchingNextPage]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -62,48 +72,61 @@ export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, so
         localStorage.setItem('viewMode', val);
     }, []);
 
+    // Check if we're fetching due to sorting (not infinite scroll)
+    // Use isPending to catch initial loads after sort changes
+    const isRefetching = (infiniteQuery?.isFetching || infiniteQuery?.isPending) && !infiniteQuery?.isFetchingNextPage;
+
     const renderFiles = useCallback(() => {
-        return files.map((file) => (
-            <FileItem variant={viewMode === 'list' ? 'row' : 'card'} key={file.id} className="selecto-item" file={file} data-id={file.id} />
+        // Show previous files during sorting if current files are empty
+        const filesToRender = files.length === 0 && isRefetching && previousFiles.length > 0 ? previousFiles : files;
+        
+        return filesToRender.map((file) => (
+            <FileItem 
+                variant={viewMode === 'list' ? 'row' : 'card'} 
+                key={file.id} 
+                className="selecto-item" 
+                file={file} 
+                data-id={file.id}
+                onFileDoubleClick={onFileDoubleClick}
+            />
         ));
-    }, [files, viewMode]);
+    }, [files, viewMode, isRefetching, previousFiles, onFileDoubleClick]);
 
     const containerClass = viewMode === 'list' ? 'flex flex-col space-y-1' : 'grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4';
-
+    
     return (
-        <div className="h-full space-y-6">
+        <div className="h-full space-y-6 flex flex-col">
             <div className="flex justify-between">
                 <ViewModeSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
                 {sortOptions && onSortChange && <FileSort sortOptions={sortOptions} onSortChange={onSortChange} />}
             </div>
-            <div ref={containerRef} className={cn(containerClass)}>
-                {renderFiles()}
+            <div className="relative">
+                <div ref={containerRef} className={cn(containerClass, isRefetching && "opacity-50 pointer-events-none", "px-2")}>
+                    {renderFiles()}
+                </div>
+                {/* Loading overlay during sorting/refetching */}
+                {isRefetching && (
+                    <div className="absolute inset-0">
+                        <div className='flex justify-center mt-24'>
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        </div>
+                    </div>
+                )}
             </div>
-            {files.length === 0 && !infiniteQuery?.isLoading && (
+            {files.length === 0 && !infiniteQuery?.isPending && !isRefetching && (
                 <div className="mt-40 text-center">
                     <span className="text-accent-foreground">{t('file_manage.list_empty')}</span>
                 </div>
             )}
 
-            {/* Loading indicator for initial load */}
-            {infiniteQuery?.isLoading && files.length === 0 && (
-                <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">{t('shared.loading')}</span>
-                </div>
-            )}
-
             {/* Load more trigger and loading indicator */}
             {infiniteQuery && files.length > 0 && (
-                <div ref={loadMoreRef} className="flex justify-center py-4">
+                <div ref={loadMoreRef} className="flex justify-center">
                     {infiniteQuery.isFetchingNextPage && (
-                        <div className="flex items-center">
+                        <div className="mt-40 flex items-center">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="ml-2 text-sm">{t('shared.loading_more')}</span>
                         </div>
-                    )}
-                    {!infiniteQuery.hasNextPage && files.length > 0 && (
-                        <span className="text-muted-foreground text-sm">{t('shared.no_more_items')}</span>
                     )}
                 </div>
             )}

@@ -15,9 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('type');
-            $table->integer('size');
-            $table->string('path');
+            $table->integer('size')->nullable();
+            $table->string('path')->nullable();
             $table->foreignIdFor(\App\Models\User::class)->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('collection_id')->nullable();
+            $table->unsignedBigInteger('parent_folder_id')->nullable();
+            $table->foreign('parent_folder_id')->references('id')->on('files')->onDelete('cascade');
             $table->boolean('shared')->default(false);
             $table->timestamps();
             $table->softDeletes();

@@ -5,13 +5,13 @@ import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { useInvalidateFileQueries } from './use-file-mutations';
 import { useFileRejectionToast } from './use-file-rejection-toast';
 
-export function useFileUploadQuery() {
+export function useFileUploadQuery(currentCollectionId?: number, currentFolderId?: number) {
   const { t } = useLaravelReactI18n();
   const invalidateFileQueries = useInvalidateFileQueries();
   const toastFileRejections = useFileRejectionToast();
 
   const uploadMutation = useMutation({
-    mutationFn: fileApi.uploadFiles,
+    mutationFn: (files: File[]) => fileApi.uploadFiles(files, currentCollectionId, currentFolderId),
     onMutate: () => {
       toast.loading(t('file_manage.file_upload.uploading'), { id: 'upload' });
     },

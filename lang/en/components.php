@@ -14,6 +14,8 @@ return [
     // --- SearchBar Component ---
     'search_placeholder' => 'Search files...',
     'search_no_results' => 'No files found',
+    'search_loading' => 'Searching...',
+    'search_results_count' => '{0} No files found|{1} :count file found|[2,*] :count files found',
     'search_results_count_singular' => ':count file found',
     'search_results_count_plural' => ':count files found',
 

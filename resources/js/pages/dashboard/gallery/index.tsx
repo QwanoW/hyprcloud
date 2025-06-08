@@ -12,7 +12,7 @@ export default function Gallery() {
     
     const galleryQuery = useInfiniteFilesQuery({
         type: 'gallery',
-        per_page: 20,
+        per_page: 50,
         sort: sortOptions.sort,
         direction: sortOptions.direction
     });

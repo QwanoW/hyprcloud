@@ -8,6 +8,7 @@ enum FileTypeEnum: string
     case VIDEO = 'video';
     case AUDIO = 'audio';
     case FILE = 'file';
+    case FOLDER = 'folder';
     case OTHER = 'other';
 
     public static function values(): array
@@ -17,6 +18,7 @@ enum FileTypeEnum: string
             self::VIDEO->value,
             self::AUDIO->value,
             self::FILE->value,
+            self::FOLDER->value,
             self::OTHER->value,
         ];
     }

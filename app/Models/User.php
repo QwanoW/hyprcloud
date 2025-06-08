@@ -53,6 +53,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsTo(Plan::class);
     }
 
+    public function sharedLinks()
+    {
+        return $this->hasMany(SharedLink::class);
+    }
+
     public function files()
     {
         return $this->hasMany(File::class);

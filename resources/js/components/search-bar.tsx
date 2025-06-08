@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Loader2, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -7,18 +6,27 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { TFile } from '@/types';
 import { FileItem } from '@/components/file-manage/file-item';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { useFileSearchQuery } from '@/hooks/file-manage/use-files-query';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 export function SearchBar() {
     const { t, tChoice } = useLaravelReactI18n();
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<TFile[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [open, setOpen] = useState(false);
     const inputRef = useRef<HTMLDivElement>(null);
     const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
+    
+    const debouncedQuery = useDebouncedValue(searchQuery, 300);
+    
+    const {
+        data: searchResponse,
+        isLoading,
+        error
+    } = useFileSearchQuery(debouncedQuery, debouncedQuery.trim().length > 0);
+    
+    const searchResults = useMemo(() => searchResponse || [], [searchResponse]);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -34,37 +42,25 @@ export function SearchBar() {
     }, []);
 
     useEffect(() => {
-        const searchFiles = async () => {
-            try {
-                const response = await axios.post<{files: TFile[]}>(route('files.search'), {
-                    q: searchQuery
-                });
-                setSearchResults(response.data.files);
-                setIsLoading(false);
-                setOpen(response.data.files.length > 0);
-            } catch (error) {
-                console.error('Error searching files:', error);
-                setIsLoading(false);
-            }
-        };
-
         if (searchQuery.trim() === '') {
-            setSearchResults([]);
             setOpen(false);
             return;
         }
-
-        setIsLoading(true);
-        const debounceTimeout = setTimeout(() => {
-            searchFiles();
-        }, 300);
-
-        return () => clearTimeout(debounceTimeout);
-    }, [searchQuery]);
+        
+        if (searchResults.length > 0) {
+            setOpen(true);
+        } else if (!isLoading && debouncedQuery.trim().length > 0) {
+            setOpen(true);
+        }
+    }, [searchResults, isLoading, searchQuery, debouncedQuery]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
+
+    if (error) {
+        console.error('Error searching files:', error);
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -105,7 +101,12 @@ export function SearchBar() {
                 ) : (
                     <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
                         <FileText className="h-4 w-4" />
-                        <span>{t('components.search_no_results')}</span>
+                        <span>
+                            {isLoading 
+                                ? t('components.search_loading') 
+                                : t('components.search_no_results')
+                            }
+                        </span>
                     </div>
                 )}
                 {searchResults.length > 0 && (

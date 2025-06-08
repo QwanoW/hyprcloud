@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { TFile } from '@/types';
+import { SharedLink, TFile } from '@/types';
 
-interface FileResponse {
+export interface FileResponse {
   data: TFile[];
   pagination?: {
     current_page: number;
@@ -43,6 +43,8 @@ export const fileApi = {
     sort?: string;
     direction?: string;
     type?: 'all' | 'gallery' | 'trash';
+    collection_id?: number;
+    folder_id?: number;
   }): Promise<FileResponse> => {
     const { type = 'all', ...otherParams } = params || {};
     
@@ -57,31 +59,20 @@ export const fileApi = {
     return response.data;
   },
 
-  // Legacy methods for backward compatibility (deprecated)
-  getGalleryFiles: async (params?: {
-    page?: number;
-    per_page?: number;
-    sort?: string;
-    direction?: string;
-  }): Promise<FileResponse> => {
-    return fileApi.getFiles({ ...params, type: 'gallery' });
-  },
-
-  getTrashFiles: async (params?: {
-    page?: number;
-    per_page?: number;
-    sort?: string;
-    direction?: string;
-  }): Promise<FileResponse> => {
-    return fileApi.getFiles({ ...params, type: 'trash' });
-  },
-
   // Upload files
-  uploadFiles: async (files: File[]): Promise<FileUploadResponse> => {
+  uploadFiles: async (files: File[], collectionId?: number, parentFolderId?: number): Promise<FileUploadResponse> => {
     const formData = new FormData();
     files.forEach((file) => {
       formData.append('files[]', file);
     });
+    
+    if (collectionId) {
+      formData.append('collection_id', collectionId.toString());
+    }
+    
+    if (parentFolderId) {
+      formData.append('parent_folder_id', parentFolderId.toString());
+    }
 
     const response = await axios.post('/api/files', formData, {
       headers: {
@@ -94,14 +85,12 @@ export const fileApi = {
   // Update file
   updateFile: async (id: number, data: {
     name?: string;
-    shared?: boolean;
     trash?: boolean;
     file?: File;
   }): Promise<FileUpdateResponse> => {
     const formData = new FormData();
     
     if (data.name !== undefined) formData.append('name', data.name);
-    if (data.shared !== undefined) formData.append('shared', data.shared.toString());
     if (data.trash !== undefined) formData.append('trash', data.trash.toString());
     if (data.file) formData.append('file', data.file);
 
@@ -148,5 +137,41 @@ export const fileApi = {
   downloadZip: async (ids: number[]): Promise<DownloadZipResponse> => {
     const response = await axios.post('/api/files/download-zip', { ids });
     return response.data;
+  },
+
+  // Shared links
+  createSharedLink: async (data: {
+    file_id: number;
+    password?: string;
+    expires_at?: string;
+    allow_download?: boolean;
+  }) => {
+    const response = await axios.post('/api/shared-links', data);
+    return response.data;
+  },
+
+  updateSharedLink: async (id: number, data: {
+    password?: string;
+    expires_at?: string;
+    allow_download?: boolean;
+    is_active?: boolean;
+  }) => {
+    const response = await axios.put(`/api/shared-links/${id}`, data);
+    return response.data;
+  },
+
+  deleteSharedLink: async (id: number) => {
+    const response = await axios.delete(`/api/shared-links/${id}`);
+    return response.data;
+  },
+
+  getFileSharedLinks: async (fileId: number) => {
+    const response = await axios.get<{shared_links: SharedLink[]}>(`/api/files/${fileId}/shared-links`);
+    return response.data.shared_links;
+  },
+
+  getUserSharedLinks: async () => {
+    const response = await axios.get('/api/user/shared-links');
+    return response.data.shared_links;
   },
 };

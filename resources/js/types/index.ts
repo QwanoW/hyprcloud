@@ -17,9 +17,8 @@ export interface NavGroup {
 export interface NavItem {
     title: string;
     url: string;
-    icon?: LucideIcon | null;
+    icon?: LucideIcon | string | null;
     isActive?: boolean;
-    only?: string[];
 }
 
 export interface SharedData {
@@ -65,6 +64,7 @@ export enum FileType {
     Video = 'video',
     Audio = 'audio',
     File = 'file',
+    Folder = 'folder',
     Other = 'other',
 }
 
@@ -83,6 +83,26 @@ export interface TFile {
     created_at: string;
     updated_at: string;
 }
+
+export interface SharedLink {
+    id: number;
+    file_id: number;
+    user_id: number;
+    token: string;
+    url: string;
+    password?: string;
+    expires_at?: string;
+    allow_download: boolean;
+    is_active: boolean;
+    access_count: number;
+    last_accessed_at?: string;
+    password_protected: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+// Alias for compatibility
+export type File = TFile;
 
 export interface PaginationLink {
     url: string | null;
@@ -138,6 +158,7 @@ export interface Plan {
     max_file_size_bytes: number;
     max_files_count: number | null;
     can_share_files: boolean;
+    can_configure_sharing: boolean;
     can_download_zip: boolean;
     has_api_access: boolean;
     max_shared_links: number | null;
@@ -156,7 +177,7 @@ export interface PlanFeature {
     updated_at: string;
 }
 
-export type OnAction = (action: 'show' | 'share' | 'cancel-share' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip') => void;
+export type OnAction = (action: 'show' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip' | 'move' | 'navigate' | 'properties') => void;
 
 export interface Vacancy {
     id: number;

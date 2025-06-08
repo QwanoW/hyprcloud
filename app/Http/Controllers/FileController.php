@@ -17,123 +17,6 @@ use ZipArchive;
 
 class FileController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
-        $perPage = $request->input('per_page', 20);
-        $sort = $request->input('sort', 'date');
-        $direction = $request->input('direction', 'desc');
-
-        $query = File::query()
-            ->where('user_id', Auth::id())
-            ->whereNull('deleted_at');
-
-        switch ($sort) {
-            case 'alphabet':
-                $query->orderBy('name', $direction);
-                break;
-            case 'size':
-                $query->orderBy('size', $direction);
-                break;
-            case 'date':
-            default:
-                $query->orderBy('created_at', $direction);
-                break;
-        }
-
-        $files = $query->paginate($perPage);
-
-        return response()->json([
-            'data' => FileResource::collection($files->items()),
-            'pagination' => [
-                'current_page' => $files->currentPage(),
-                'last_page' => $files->lastPage(),
-                'per_page' => $files->perPage(),
-                'total' => $files->total(),
-                'has_more_pages' => $files->hasMorePages(),
-                'next_page_url' => $files->nextPageUrl(),
-            ]
-        ]);
-    }
-
-    public function gallery(Request $request): JsonResponse
-    {
-        $perPage = $request->input('per_page', 20);
-        $sort = $request->input('sort', 'date');
-        $direction = $request->input('direction', 'desc');
-
-        $query = File::query()
-            ->where('user_id', Auth::id())
-            ->where('type', FileTypeEnum::IMAGE)
-            ->whereNull('deleted_at');
-
-        switch ($sort) {
-            case 'alphabet':
-                $query->orderBy('name', $direction);
-                break;
-            case 'size':
-                $query->orderBy('size', $direction);
-                break;
-            case 'date':
-            default:
-                $query->orderBy('created_at', $direction);
-                break;
-        }
-
-        $files = $query->paginate($perPage);
-
-        return response()->json([
-            'data' => FileResource::collection($files->items()),
-            'pagination' => [
-                'current_page' => $files->currentPage(),
-                'last_page' => $files->lastPage(),
-                'per_page' => $files->perPage(),
-                'total' => $files->total(),
-                'has_more_pages' => $files->hasMorePages(),
-                'next_page_url' => $files->nextPageUrl(),
-            ]
-        ]);
-    }
-
-    public function trash(Request $request): JsonResponse
-    {
-        $perPage = $request->input('per_page', 20);
-        $sort = $request->input('sort', 'date');
-        $direction = $request->input('direction', 'desc');
-
-        $query = File::query()
-            ->where('user_id', Auth::id())
-            ->onlyTrashed();
-
-        switch ($sort) {
-            case 'alphabet':
-                $query->orderBy('name', $direction);
-                break;
-            case 'size':
-                $query->orderBy('size', $direction);
-                break;
-            case 'date':
-            default:
-                $query->orderBy('created_at', $direction);
-                break;
-        }
-
-        $files = $query->paginate($perPage);
-
-        return response()->json([
-            'data' => FileResource::collection($files->items()),
-            'pagination' => [
-                'current_page' => $files->currentPage(),
-                'last_page' => $files->lastPage(),
-                'per_page' => $files->perPage(),
-                'total' => $files->total(),
-                'has_more_pages' => $files->hasMorePages(),
-                'next_page_url' => $files->nextPageUrl(),
-            ]
-        ]);
-    }
-
-
-
 
     public function show(Request $request, $filepath)
     {
@@ -170,10 +53,12 @@ class FileController extends Controller
         $user = Auth::user();
         $plan = $user->plan;
         
-        // Validate files array
+        // Validate files array and optional parameters
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'file|max:' . ($plan->max_file_size_bytes / 1024), // Convert MB to KB for Laravel validation
+            'collection_id' => 'nullable|exists:collections,id',
+            'parent_folder_id' => 'nullable|exists:files,id',
         ]);
         
         $uploadedFiles = [];
@@ -191,14 +76,6 @@ class FileController extends Controller
                     number_format(($user->storage_used_bytes + $totalUploadSize - $plan->storage_limit_bytes) / (1024 * 1024), 2) . 
                     ' MB more storage.',
                 'error' => 'storage_limit_exceeded'
-            ], 422);
-        }
-        
-        // Check file count limit
-        if ($plan->max_files_count && $user->files()->count() + count($request->file('files')) > $plan->max_files_count) {
-            return response()->json([
-                'message' => 'File count limit exceeded. Your plan allows maximum ' . $plan->max_files_count . ' files.',
-                'error' => 'file_count_limit_exceeded'
             ], 422);
         }
     
@@ -220,16 +97,32 @@ class FileController extends Controller
             }
     
             $extension = $uploadedFile->getClientOriginalExtension();
+            $originalName = $uploadedFile->getClientOriginalName();
+            
+            // Check for duplicate file with same name and extension
+            $existingFile = File::withTrashed()->where('user_id', $user->id)
+                ->where('name', $originalName)
+                ->first();
+                
+            if ($existingFile) {
+                return response()->json([
+                    'message' => 'A file with the same name already exists in this location: ' . $originalName,
+                    'error' => 'duplicate_file'
+                ], 422);
+            }
+            
             $fileName = Str::random(40) . '.' . $extension;
             
             $path = $uploadedFile->storeAs($user->id, $fileName, 'local');
-    
+
             $file = File::create([
                 'user_id' => $user->id,
                 'name' => $uploadedFile->getClientOriginalName(),
                 'type' => $fileType->value,
                 'size' => $uploadedFile->getSize(),
                 'path' => $path,
+                'collection_id' => $request->input('collection_id'),
+                'parent_folder_id' => $request->input('parent_folder_id'),
             ]);
     
             ActivityLoggerService::logFileUpload(
@@ -260,7 +153,6 @@ class FileController extends Controller
 
         $rules = [
             'name'   => 'sometimes|string|max:255',
-            'shared' => 'sometimes|boolean',
             'trash'  => 'sometimes|boolean',
             'file'   => 'sometimes|file|max:2097152',
         ];
@@ -273,9 +165,7 @@ class FileController extends Controller
             $updateData['name'] = $validatedData['name'];
         }
 
-        if (array_key_exists('shared', $validatedData)) {
-            $updateData['shared'] = $validatedData['shared'];
-        }
+
 
         if (array_key_exists('trash', $validatedData)) {
             $updateData['trash'] = $validatedData['trash'];
@@ -397,15 +287,27 @@ class FileController extends Controller
             return response()->json(['error' => 'Access denied'], 403);
         }
 
-        $fileForMovingToTrash->each(function (File $file) {
-            ActivityLoggerService::logFileDelete(
-                $file->id,
-                $file->name,
-                $file->size,
-                true
-            );
-            $file->forceDelete();
-        });
+        try {
+            $fileForMovingToTrash->each(function (File $file) {
+                ActivityLoggerService::logFileDelete(
+                    $file->id,
+                    $file->name,
+                    $file->size,
+                    true
+                );
+                $file->forceDelete();
+            });
+        } catch (\Exception $e) {
+            \Log::error('Error during bulk permanent delete: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'file_ids' => $ids,
+                'exception' => $e
+            ]);
+            
+            return response()->json([
+                'error' => 'An error occurred while deleting files. Please try again.'
+            ], 500);
+        }
 
         return response()->json([
             'message' => 'Files permanently deleted successfully'

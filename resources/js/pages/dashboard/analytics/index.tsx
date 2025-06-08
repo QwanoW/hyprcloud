@@ -93,10 +93,6 @@ export default function Analytics({ fileStats, activityByDay, activitySummary, r
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: t('breadcrumb.dashboard'),
-            href: '/dashboard',
-        },
-        {
             title: t('breadcrumb.analytics'),
             href: '/dashboard/analytics',
         },

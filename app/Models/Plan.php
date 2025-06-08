@@ -16,10 +16,9 @@ class Plan extends Model
         'popular' => 'boolean',
         'storage_limit_bytes' => 'integer',
         'max_file_size_bytes' => 'integer',
-        'max_files_count' => 'integer',
         'can_share_files' => 'boolean',
         'can_download_zip' => 'boolean',
-        'has_api_access' => 'boolean',
+        'can_configure_sharing' => 'boolean',
         'max_shared_links' => 'integer',
         'shared_link_expiry_days' => 'integer',
     ];

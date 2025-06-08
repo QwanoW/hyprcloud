@@ -8,15 +8,21 @@ import { useFormatFileSize } from '@/hooks/file-manage/use-format-file-size';
 
 interface SharedPageProps {
     file: TFile;
+    sharedLink: {
+        allow_download: boolean;
+        token: string;
+    };
 }
 
-export default function SharedPage({ file }: SharedPageProps) {
+export default function SharedPage({ file, sharedLink }: SharedPageProps) {
     const { t, currentLocale } = useLaravelReactI18n(); // Get the translation function
     const updatedAt = new Date(file.updated_at);
     const locale = currentLocale();
 
     const handleDownload = () => {
-        window.open(file.url, '_blank');
+        if (sharedLink.allow_download) {
+            window.open(`/shared/${sharedLink.token}/download`, '_blank');
+        }
     };
 
     const renderPreview = () => {
@@ -95,13 +101,15 @@ export default function SharedPage({ file }: SharedPageProps) {
                                 </span>
                             </div>
                         </div>
-                        <Button
-                            onClick={handleDownload}
-                            className="flex-shrink-0 bg-primary hover:bg-primary/90 transition-all"
-                        >
-                            <Download className="h-4 w-4 mr-2" />
-                            {t('shared.button_download')}
-                        </Button>
+                        {sharedLink.allow_download && (
+                            <Button
+                                onClick={handleDownload}
+                                className="flex-shrink-0 bg-primary hover:bg-primary/90 transition-all"
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                {t('shared.button_download')}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

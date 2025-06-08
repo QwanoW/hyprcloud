@@ -19,39 +19,60 @@ class FileResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document';
 
-    protected static ?string $navigationLabel = 'Файлы';
-    
-    protected static ?string $navigationGroup = 'Управление файлами';
+    public static function getModelLabel(): string
+    {
+        return __('filament.resources.file.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.resources.file.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.resources.file.navigation_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation_groups.file_management');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Информация о файле')
+                Forms\Components\Section::make(__('filament.resources.file.form.file_info'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Имя файла')
+                            ->label(__('filament.resources.file.form.name'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Select::make('type')
-                            ->label('Тип файла')
+                            ->label(__('filament.resources.file.form.type'))
                             ->options(\App\Enum\FileTypeEnum::class)
                             ->required(),
                         Forms\Components\TextInput::make('size')
-                            ->label('Размер (байт)')
+                            ->label(__('filament.resources.file.form.size'))
                             ->numeric()
                             ->required(),
                         Forms\Components\TextInput::make('path')
-                            ->label('Путь к файлу')
+                            ->label(__('filament.resources.file.form.path'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Select::make('user_id')
-                            ->label('Пользователь')
+                            ->label(__('filament.resources.file.form.user'))
                             ->relationship('user', 'name')
                             ->required(),
-                        Forms\Components\Toggle::make('shared')
-                            ->label('Общий доступ')
-                            ->default(false),
+                        Forms\Components\Select::make('collection_id')
+                            ->label(__('filament.resources.file.form.collection'))
+                            ->relationship('collection', 'name')
+                            ->searchable(),
+                        Forms\Components\Select::make('parent_folder_id')
+                            ->label(__('filament.resources.file.form.parent_folder'))
+                            ->relationship('parentFolder', 'name')
+                            ->searchable(),
                     ])->columns(2),
             ]);
     }
@@ -61,42 +82,58 @@ class FileResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Имя файла')
-                    ->searchable(),
+                    ->label(__('filament.resources.file.table.name'))
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Тип файла')
+                    ->label(__('filament.resources.file.table.type'))
                     ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('size')
-                    ->label('Размер')
+                    ->label(__('filament.resources.file.table.size'))
                     ->formatStateUsing(fn (int $state): string => number_format($state / 1024, 2) . ' KB')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Пользователь')
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('shared')
-                    ->label('Общий доступ')
-                    ->boolean(),
+                    ->label(__('filament.resources.file.table.user'))
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('collection.name')
+                    ->label(__('filament.resources.file.table.collection'))
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('parentFolder.name')
+                    ->label(__('filament.resources.file.table.parent_folder'))
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Создан')
+                    ->label(__('filament.resources.file.table.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Обновлен')
+                    ->label(__('filament.resources.file.table.updated_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('deleted_at')
+                    ->label(__('filament.resources.file.table.deleted_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -113,7 +150,16 @@ class FileResource extends Resource
         return [
             'index' => Pages\ListFiles::route('/'),
             'create' => Pages\CreateFile::route('/create'),
+            'view' => Pages\ViewFile::route('/{record}'),
             'edit' => Pages\EditFile::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

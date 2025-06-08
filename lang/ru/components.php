@@ -14,6 +14,8 @@ return [
     // --- SearchBar Component ---
     'search_placeholder' => 'Поиск файлов...',
     'search_no_results' => 'Файлы не найдены',
+    'search_loading' => 'Поиск...',
+    'search_results_count' => '{0} Файлы не найдены|{1} Найден :count файл|{2,4} Найдено :count файла|[5,*] Найдено :count файлов',
     'search_results_count_singular' => 'Найден :count файл',
     'search_results_count_plural' => 'Найдено :count файлов',
 

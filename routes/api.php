@@ -1,13 +1,24 @@
 <?php
 
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FileManagerController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\SharedLinkController;
 use App\Http\Controllers\VacancyController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('api')->group(function() {
-    // File management API endpoints
-    Route::get('/files', [FileController::class, 'index'])->name('api.files.index');
+    // Unified file and folder management API endpoints
+    Route::get('/file-manager', [FileManagerController::class, 'index'])->name('api.file-manager.index');
+    Route::post('/file-manager/folders', [FileManagerController::class, 'createFolder'])->name('api.file-manager.create-folder');
+    Route::get('/file-manager/tree', [FileManagerController::class, 'tree'])->name('api.file-manager.tree');
+    Route::put('/file-manager/{id}/move', [FileManagerController::class, 'move'])->name('api.file-manager.move');
+    Route::put('/file-manager/{id}/name', [FileManagerController::class, 'updateName'])->name('api.file-manager.update-name');
+    Route::delete('/file-manager/{id}', [FileManagerController::class, 'destroy'])->name('api.file-manager.destroy');
+    
+    // File operations
     Route::post('/files', [FileController::class, 'store'])->name('api.files.store');
     Route::put('/files/{id}', [FileController::class, 'update'])->name('api.files.update');
     Route::delete('/files/{id}', [FileController::class, 'destroy'])->name('api.files.destroy');
@@ -19,9 +30,16 @@ Route::middleware(['auth'])->prefix('api')->group(function() {
     
     // Special operations
     Route::post('/files/download-zip', [FileController::class, 'downloadZip'])->name('api.files.download-zip');
-    Route::post('/files/search', [FileController::class, 'search'])->name('api.files.search');
+    Route::get('/files/search', [FileController::class, 'search'])->name('api.files.search');
     
-    // File variants (gallery, trash)
-    Route::get('/files/gallery', [FileController::class, 'gallery'])->name('api.files.gallery');
-    Route::get('/files/trash', [FileController::class, 'trash'])->name('api.files.trash');
+    // Collections API endpoints
+    Route::apiResource('collections', CollectionController::class);
+    Route::get('/collections-recent', [CollectionController::class, 'recent'])->name('api.collections.recent');
+    
+    // Shared links API endpoints
+    Route::post('/shared-links', [SharedLinkController::class, 'create'])->name('api.shared-links.create');
+    Route::put('/shared-links/{sharedLink}', [SharedLinkController::class, 'update'])->name('api.shared-links.update');
+    Route::delete('/shared-links/{sharedLink}', [SharedLinkController::class, 'destroy'])->name('api.shared-links.destroy');
+    Route::get('/files/{file}/shared-links', [SharedLinkController::class, 'getFileSharedLinks'])->name('api.files.shared-links');
+    Route::get('/user/shared-links', [SharedLinkController::class, 'getUserSharedLinks'])->name('api.user.shared-links');
 });

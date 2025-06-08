@@ -32,45 +32,10 @@ class PlanSeeder extends Seeder
                 'Basic' => ['name_en' => 'Email support', 'name_ru' => 'Поддержка по электронной почте', 'popular' => true],
                 'Pro' => ['name_en' => 'Priority support', 'name_ru' => 'Приоритетная поддержка', 'popular' => true],
             ],
-            'exports' => [
-                'Free' => ['name_en' => 'Limited exports', 'name_ru' => 'Ограниченные экспорты', 'popular' => false],
-                'Basic' => ['name_en' => 'Unlimited exports', 'name_ru' => 'Неограниченные экспорты', 'popular' => false],
-                'Pro' => ['name_en' => 'Unlimited exports', 'name_ru' => 'Неограниченные экспорты', 'popular' => false],
-            ],
-            'versioning' => [
-                'Free' => ['name_en' => 'File versioning (1 day)', 'name_ru' => 'Версионирование файлов (1 день)', 'popular' => false],
-                'Basic' => ['name_en' => 'File versioning (30 days)', 'name_ru' => 'Версионирование файлов (30 дней)', 'popular' => false],
-                'Pro' => ['name_en' => 'File versioning (unlimited)', 'name_ru' => 'Версионирование файлов (без ограничений)', 'popular' => false],
-            ],
-            'security' => [
-                'Free' => ['name_en' => 'Standard security', 'name_ru' => 'Стандартная безопасность', 'popular' => false],
-                'Basic' => ['name_en' => 'Enhanced security', 'name_ru' => 'Усиленная безопасность', 'popular' => false],
-                'Pro' => ['name_en' => 'Enterprise-grade security', 'name_ru' => 'Корпоративный уровень безопасности', 'popular' => false],
-            ],
-            'mobile' => [
-                'Free' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
-                'Basic' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
-                'Pro' => ['name_en' => 'Mobile app access', 'name_ru' => 'Доступ через мобильное приложение', 'popular' => false],
-            ],
-            'api' => [
-                'Free' => ['name_en' => 'No API access', 'name_ru' => 'Нет доступа к API', 'popular' => false, 'included' => false],
-                'Basic' => ['name_en' => 'Basic API access', 'name_ru' => 'Базовый доступ к API', 'popular' => false],
-                'Pro' => ['name_en' => 'Full API access', 'name_ru' => 'Полный доступ к API', 'popular' => false],
-            ],
-            'integrations' => [
-                'Free' => ['name_en' => 'No custom integrations', 'name_ru' => 'Нет пользовательских интеграций', 'popular' => false, 'included' => false],
-                'Basic' => ['name_en' => 'Limited integrations', 'name_ru' => 'Ограниченные интеграции', 'popular' => false],
-                'Pro' => ['name_en' => 'Custom integrations', 'name_ru' => 'Пользовательские интеграции', 'popular' => true],
-            ],
-            'team' => [
-                'Free' => ['name_en' => 'No team collaboration', 'name_ru' => 'Нет командного сотрудничества', 'popular' => false, 'included' => false],
-                'Basic' => ['name_en' => 'Team collaboration (up to 3)', 'name_ru' => 'Командное сотрудничество (до 3-х)', 'popular' => true],
-                'Pro' => ['name_en' => 'Unlimited team collaboration', 'name_ru' => 'Неограниченное командное сотрудничество', 'popular' => false],
-            ],
-            'account_manager' => [
-                'Free' => ['name_en' => 'No account manager', 'name_ru' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
-                'Basic' => ['name_en' => 'No account manager', 'name_ru' => 'Нет менеджера аккаунта', 'popular' => false, 'included' => false],
-                'Pro' => ['name_en' => 'Dedicated account manager', 'name_ru' => 'Персональный менеджер аккаунта', 'popular' => false],
+            'download_limit' => [
+                'Free' => ['name_en' => '100GB monthly download limit', 'name_ru' => 'Лимит скачивания 100 ГБ в месяц', 'popular' => false],
+                'Basic' => ['name_en' => 'Unlimited downloads', 'name_ru' => 'Неограниченные скачивания', 'popular' => false],
+                'Pro' => ['name_en' => 'Unlimited downloads', 'name_ru' => 'Неограниченные скачивания', 'popular' => false],
             ],
         ];
 
@@ -84,14 +49,13 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 0,
                 'yearly_usd_price' => 0,
                 'popular' => false,
-                'storage_limit_bytes' => 2 * 1024 * 1024 * 1024, // 2GB
-                'max_file_size_bytes' => 50 * 1024 * 1024,
-                'max_files_count' => 100,
+                'storage_limit_bytes' => 5 * 1024 * 1024 * 1024, // 5GB
+                'max_file_size_bytes' => 25 * 1024 * 1024, // 25MB
                 'can_share_files' => true,
-                'can_download_zip' => false,
-                'has_api_access' => false,
-                'max_shared_links' => 5,
-                'shared_link_expiry_days' => 7,
+                'can_download_zip' => true,
+                'can_configure_sharing' => false,
+                'max_shared_links' => 20,
+                'shared_link_expiry_days' => 30,
             ],
             [
                 'name_en' => 'Basic',
@@ -102,14 +66,13 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 9,
                 'yearly_usd_price' => 90,
                 'popular' => true,
-                'storage_limit_bytes' => 100 * 1024 * 1024 * 1024, // 100GB
-                'max_file_size_bytes' => 1024 * 1024 * 1024,
-                'max_files_count' => 1000,
+                'storage_limit_bytes' => 10 * 1024 * 1024 * 1024, // 500GB
+                'max_file_size_bytes' => 1024 * 1024 * 1024, // 1GB
                 'can_share_files' => true,
                 'can_download_zip' => true,
-                'has_api_access' => true,
-                'max_shared_links' => 50,
-                'shared_link_expiry_days' => 30,
+                'can_configure_sharing' => true,
+                'max_shared_links' => 200,
+                'shared_link_expiry_days' => 90,
             ],
             [
                 'name_en' => 'Pro',
@@ -120,12 +83,11 @@ class PlanSeeder extends Seeder
                 'monthly_usd_price' => 19,
                 'yearly_usd_price' => 190,
                 'popular' => false,
-                'storage_limit_bytes' => 1024 * 1024 * 1024 * 1024, // 1TB
-                'max_file_size_bytes' => 100 * 1024 * 1024 * 1024,
-                'max_files_count' => null, // unlimited
+                'storage_limit_bytes' => 100 * 1024 * 1024 * 1024, // 100 GB
+                'max_file_size_bytes' => 1024 * 1024 * 1024, // 1GB
                 'can_share_files' => true,
                 'can_download_zip' => true,
-                'has_api_access' => true,
+                'can_configure_sharing' => true,
                 'max_shared_links' => null, // unlimited
                 'shared_link_expiry_days' => null, // no expiry
             ],
@@ -146,10 +108,9 @@ class PlanSeeder extends Seeder
                 'popular' => $planData['popular'],
                 'storage_limit_bytes' => $planData['storage_limit_bytes'],
                 'max_file_size_bytes' => $planData['max_file_size_bytes'],
-                'max_files_count' => $planData['max_files_count'],
                 'can_share_files' => $planData['can_share_files'],
                 'can_download_zip' => $planData['can_download_zip'],
-                'has_api_access' => $planData['has_api_access'],
+                'can_configure_sharing' => $planData['can_configure_sharing'],
                 'max_shared_links' => $planData['max_shared_links'],
                 'shared_link_expiry_days' => $planData['shared_link_expiry_days'],
             ]);
