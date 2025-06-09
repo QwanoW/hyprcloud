@@ -43,7 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('dashboard')->group(function () {
         Route::get('/', [AppController::class, 'dashboard'])->name('dashboard');
         Route::get('/files', [AppController::class, 'files'])->name('all-files');
-        Route::get('/files/{fileId}', [AppController::class, 'showFile'])->name('files.show');
+        Route::get('/files/{fileId}', [AppController::class, 'showFile'])->name('files.showFile');
         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
         Route::get('trash', [AppController::class, 'trash'])->name('trash');
         Route::get('shared', [AppController::class, 'shared'])->name('shared');
