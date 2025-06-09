@@ -92,6 +92,6 @@ class CollectionController extends Controller
 
         $collection->delete();
 
-        return response()->json(['message' => 'Collection deleted successfully']);
+        return response()->json(['message' => 'Коллекция успешно удалена']);
     }
 }

@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public routes for shared files
-Route::get('/shared/{token}', [SharedLinkController::class, 'access'])->name('shared.access');
-Route::post('/shared/{token}', [SharedLinkController::class, 'access'])->name('shared.access.password');
+Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.access');
+Route::post('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.password');
 Route::get('/shared/{token}/download', [SharedLinkController::class, 'download'])->name('shared.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -66,9 +66,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
-
-Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.access');
-Route::post('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.password');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

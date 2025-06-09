@@ -40,14 +40,13 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
         enabled: currentFile?.type === FileType.Folder,
     });
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const sourcePage = urlParams.get('source');
+    const pageVariant = sourcePage?.includes('/dashboard/trash') ? 'trash' : 'default';
+
     const files = useAllFilesFromInfinite(filesQuery);
 
     const getFirstBreadcrumb = (): BreadcrumbItem[] => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const source = urlParams.get('source');
-
-        const sourcePage = source;
-
         if (sourcePage?.includes('/dashboard/gallery')) {
             return [
                 {
@@ -301,6 +300,7 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
                     infiniteQuery={filesQuery}
                     sortOptions={sortOptions}
                     onSortChange={updateSort}
+                    variant={pageVariant}
                     currentFolderId={currentFile?.type === FileType.Folder ? currentFile.id : undefined}
                 />
             </div>
