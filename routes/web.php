@@ -53,7 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Collections routes
         Route::get('collections', function () {
             return Inertia::render('dashboard/collections/index');
-        })->name('collections.index');
+        })->name('dashboard.collections.index');
         Route::get('collections/{collection}', function ($collection) {
             return Inertia::render('dashboard/collections/show', ['collectionId' => $collection]);
         })->name('collections.show');
