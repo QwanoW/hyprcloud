@@ -56,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard.collections.index');
         Route::get('collections/{collection}', function ($collection) {
             return Inertia::render('dashboard/collections/show', ['collectionId' => $collection]);
-        })->name('collections.show');
+        })->name('dashboard.collections.show');
         
         // Folders routes
         Route::get('folders/{folder}', function ($folder) {
