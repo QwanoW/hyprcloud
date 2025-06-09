@@ -20,7 +20,7 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /var/www/laravel-project
+            cd /var/www/hyprcloud
             git pull origin main
             composer install --no-dev --optimize-autoloader
             
