@@ -1,6 +1,7 @@
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info'; // Assuming UserInfo doesn't need translation itself
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { useLogout } from '@/hooks/use-logout';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
@@ -12,7 +13,13 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const logout = useLogout();
     const { t } = useLaravelReactI18n();
+
+    const handleLogout = () => {
+        cleanup();
+        logout();
+    };
 
     return (
         <>
@@ -43,11 +50,9 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link className="block w-full" method="post" href={route('logout')} as="button" onClick={cleanup}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t('components.user_menu_logout')}
-                </Link>
+            <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                {t('components.user_menu_logout')}
             </DropdownMenuItem>
         </>
     );
