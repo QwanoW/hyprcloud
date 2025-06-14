@@ -8,7 +8,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     return (
         <header
             // className="border-sidebar-border/50 flex h-16 shrink-0 items-center gap-2 border-b px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
-            className="border-sidebar-border/50 flex h-32 md:h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear"
+            className="border-sidebar-border/50 flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear"
         >
             {/* <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 justify-between"> */}
                 <div className="flex items-center gap-2">

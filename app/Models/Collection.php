@@ -18,6 +18,11 @@ class Collection extends Model
         'user_id',
     ];
 
+    protected $appends = [
+        'files_count',
+        'folders_count',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -28,8 +33,13 @@ class Collection extends Model
         return $this->hasMany(File::class);
     }
 
-    public function folders(): HasMany
+    public function getFilesCountAttribute(): int
     {
-        return $this->hasMany(Folder::class);
+        return $this->files()->where('type', '!=', 'folder')->count();
+    }
+
+    public function getFoldersCountAttribute(): int
+    {
+        return $this->files()->where('type', 'folder')->count();
     }
 }

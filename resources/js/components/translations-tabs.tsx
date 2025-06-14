@@ -1,12 +1,18 @@
 import { cn } from '@/lib/utils';
 import { HTMLAttributes } from 'react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { changeLocale } from '@/lib/locale';
 
 export default function TranslationsToggleTab({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
   const { currentLocale, setLocale, getLocales } = useLaravelReactI18n();
   
   const locales = getLocales();
   const activeLocale = currentLocale();
+
+  const onChange = (locale: string) => {
+    setLocale(locale);
+    changeLocale(locale);
+  }
 
   return (
     <div
@@ -19,7 +25,7 @@ export default function TranslationsToggleTab({ className = '', ...props }: HTML
       {locales.map(locale => (
         <button
           key={locale}
-          onClick={() => setLocale(locale)}
+          onClick={() => onChange(locale)}
           className={cn(
             'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
             activeLocale === locale

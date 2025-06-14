@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Enum\FileTypeEnum;
 use App\Services\ActivityLoggerService;
+use App\Services\ZipService;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
@@ -71,10 +72,9 @@ class FileController extends Controller
         
         // Check if user has enough storage space
         if (!$user->hasStorageSpace($totalUploadSize)) {
+            $neededSpace = number_format(($user->storage_used_bytes + $totalUploadSize - $plan->storage_limit_bytes) / (1024 * 1024), 2);
             return response()->json([
-                'message' => 'Insufficient storage space. You need ' . 
-                    number_format(($user->storage_used_bytes + $totalUploadSize - $plan->storage_limit_bytes) / (1024 * 1024), 2) . 
-                    ' MB more storage.',
+                'message' => __('file_manage.insufficient_storage', ['space' => $neededSpace]),
                 'error' => 'storage_limit_exceeded'
             ], 422);
         }
@@ -106,7 +106,7 @@ class FileController extends Controller
                 
             if ($existingFile) {
                 return response()->json([
-                    'message' => 'A file with the same name already exists in this location: ' . $originalName,
+                    'message' => __('file_manage.duplicate_file', ['name' => $originalName]),
                     'error' => 'duplicate_file'
                 ], 422);
             }
@@ -135,7 +135,7 @@ class FileController extends Controller
         }
     
         return response()->json([
-            'message' => 'Files uploaded successfully',
+            'message' => __('file_manage.files_uploaded'),
             'files' => FileResource::collection($uploadedFiles)
         ], 201);
     }
@@ -148,7 +148,7 @@ class FileController extends Controller
         $file = File::findOrFail($id);
 
         if ($file->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $rules = [
@@ -201,7 +201,7 @@ class FileController extends Controller
         $file->update($updateData);
 
         return response()->json([
-            'message' => 'File updated successfully',
+            'message' => __('file_manage.file_updated'),
             'file' => new FileResource($file)
         ]);
     }
@@ -211,7 +211,7 @@ class FileController extends Controller
         $file = File::findOrFail($id);
 
         if ($file->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         ActivityLoggerService::logFileDelete(
@@ -223,7 +223,7 @@ class FileController extends Controller
         $file->delete();
 
         return response()->json([
-            'message' => 'File deleted successfully'
+            'message' => __('file_manage.file_deleted')
         ]);
     }
 
@@ -246,7 +246,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $files = File::whereIn('id', $ids)->get();
@@ -261,7 +261,7 @@ class FileController extends Controller
         $filesForDeletion->delete();
 
         return response()->json([
-            'message' => 'Files moved to trash successfully'
+            'message' => __('file_manage.files_moved_to_trash')
         ]);
     }
 
@@ -284,7 +284,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         try {
@@ -305,12 +305,12 @@ class FileController extends Controller
             ]);
             
             return response()->json([
-                'error' => 'An error occurred while deleting files. Please try again.'
+                'error' => __('file_manage.delete_error')
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Files permanently deleted successfully'
+            'message' => __('file_manage.files_deleted_permanently')
         ]);
     }
 
@@ -333,7 +333,7 @@ class FileController extends Controller
             ->count();
 
         if ($ownedFilesCount !== count($ids)) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $filesForRestore->each(function (File $file) {
@@ -346,18 +346,15 @@ class FileController extends Controller
         });
 
         return response()->json([
-            'message' => 'Files restored successfully'
+            'message' => __('file_manage.files_restored')
         ]);
     }
 
-    public function downloadZip(Request $request)
+    public function downloadZip(Request $request, ZipService $zipService)
     {
         if (session()->has('last_zip_file')) {
             $previousZipFile = session('last_zip_file');
-            $prevZipPath = storage_path("app/public/{$previousZipFile}");
-            if (file_exists($prevZipPath)) {
-                unlink($prevZipPath);
-            }
+            $zipService->cleanupZipFile($previousZipFile);
             session()->forget('last_zip_file');
         }
     
@@ -372,25 +369,19 @@ class FileController extends Controller
         $files = File::whereIn('id', $ids)->where('user_id', $userId)->get();
         
         if ($files->isEmpty()) {
-            return response()->json(['error' => 'Файлы не найдены'], 404);
+            return response()->json(['error' => __('file_manage.files_not_found')], 404);
         }
     
-        $zipFileName = "files_" . time() . ".zip";
-        $zipPath = storage_path("app/public/{$zipFileName}");
+        $zipFileName = $zipService->generateZipFileName();
+        $zipPath = $zipService->getZipPath($zipFileName);
     
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            return response()->json(['error' => 'Не удалось создать архив'], 500);
-        }
-    
-        foreach ($files as $file) {
-            $filePath = storage_path("app/private/" . $file->path);
-            if (file_exists($filePath)) {
-                $zip->addFile($filePath, $file->name);
-            }
+        if (!$zipService->createZipFromFiles($files, $zipPath)) {
+            return response()->json(['error' => __('file_manage.archive_creation_failed')], 500);
         }
         
-        $zip->close();
+        if (!file_exists($zipPath)) {
+            return response()->json(['error' => __('file_manage.archive_creation_failed')], 500);
+        }
         
         $zipSize = filesize($zipPath);
 
@@ -405,6 +396,8 @@ class FileController extends Controller
         ]);
     }
     
+
+    
     public function search(Request $request)
     {
         $validated = $request->validate([
@@ -417,7 +410,6 @@ class FileController extends Controller
         $files = File::query()
             ->where('user_id', $userId)
             ->where('name', 'like', '%' . $query . '%')
-            ->limit(10)
             ->get();
 
         return response()->json([

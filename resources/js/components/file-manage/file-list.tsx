@@ -96,7 +96,7 @@ export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, so
     
     return (
         <div className="h-full space-y-6 flex flex-col">
-            <div className="flex justify-between">
+            <div className="flex justify-between flex-wrap">
                 <ViewModeSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
                 {sortOptions && onSortChange && <FileSort sortOptions={sortOptions} onSortChange={onSortChange} />}
             </div>

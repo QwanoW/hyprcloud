@@ -115,7 +115,7 @@ class FileManagerController extends Controller
                 ->first();
 
             if (!$parentFolder) {
-                return response()->json(['error' => 'Invalid parent folder'], 422);
+                return response()->json(['error' => __('file_manage.invalid_parent_folder')], 422);
             }
         }
 
@@ -176,13 +176,13 @@ class FileManagerController extends Controller
                 ->first();
 
             if (!$parentFolder) {
-                return response()->json(['error' => 'Invalid parent folder'], 422);
+                return response()->json(['error' => __('file_manage.invalid_parent_folder')], 422);
             }
 
             // Prevent moving a folder into itself or its descendants
             if ($file->type === FileTypeEnum::FOLDER) {
                 if ($this->isDescendantOf($request->parent_folder_id, $file->id)) {
-                    return response()->json(['error' => 'Cannot move folder into itself or its descendants'], 422);
+                    return response()->json(['error' => __('file_manage.cannot_move_folder_into_itself')], 422);
                 }
             }
         }
@@ -246,7 +246,7 @@ class FileManagerController extends Controller
             $file->delete();
         }
 
-        return response()->json(['message' => 'Item deleted successfully']);
+        return response()->json(['message' => __('file_manage.item_deleted')]);
     }
 
     /**

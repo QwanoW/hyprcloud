@@ -3,13 +3,9 @@
 use App\Http\Controllers\AppController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\FileController;
-use App\Http\Resources\FileResource;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlanController;
-use App\Http\Controllers\CollectionController;
-use App\Http\Controllers\FolderController;
 use App\Http\Controllers\SharedLinkController;
-use App\Models\File;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -17,6 +13,7 @@ use Inertia\Inertia;
 Route::get('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.access');
 Route::post('/shared/{token}', [SharedLinkController::class, 'accessPage'])->name('shared.password');
 Route::get('/shared/{token}/download', [SharedLinkController::class, 'download'])->name('shared.download');
+Route::get('/shared/{token}/preview', [SharedLinkController::class, 'preview'])->name('shared.preview');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('files', FileController::class)->except(['show', 'index']);

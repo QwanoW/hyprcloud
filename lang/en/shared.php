@@ -6,6 +6,9 @@ return [
 
     // Download button
     'button_download' => 'Download',
+    'button_download_folder' => 'Download as ZIP',
+    'button_downloading' => 'Downloading...',
+    'folder_preview_text' => 'This is a folder containing multiple files',
 
     // Forbidden page content
     'title' => 'Access Denied',
@@ -25,6 +28,7 @@ return [
     // Password protection
     'password_required' => 'Password Required',
     'password_description' => 'This shared file is password protected. Please enter the password to access it.',
+    'invalid_password' => 'Invalid password',
     'password' => 'Password',
     'enter_password' => 'Enter password',
     'accessing' => 'Accessing...',

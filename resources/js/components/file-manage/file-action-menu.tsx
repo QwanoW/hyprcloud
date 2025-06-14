@@ -2,11 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { OnAction } from '@/types';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { Download, Info, Move, Navigation, RotateCw, Share2, Trash2 } from 'lucide-react';
+import { Download, Edit, Info, Move, Navigation, Redo2, RotateCw, Share2, Trash2 } from 'lucide-react';
 
 interface ActionMenuProps {
     pos: { x: number; y: number };
-    variant: 'default' | 'trash';
+    variant: 'default' | 'trash' | 'collection';
     isFolder?: boolean;
     disableMultipleAction?: boolean;
     onAction: OnAction;
@@ -21,7 +21,7 @@ export const ActionMenu = ({ pos, variant, isFolder = false, disableMultipleActi
             action: 'navigate',
             labelKey: 'file_manage.action_menu_navigate',
             icon: <Navigation className="mr-2 h-4 w-4" />,
-            variants: ['default', 'trash'],
+            variants: ['default', 'trash', 'collection'],
             acceptMultiple: false,
             folderOnly: true,
         },
@@ -29,16 +29,24 @@ export const ActionMenu = ({ pos, variant, isFolder = false, disableMultipleActi
             action: 'properties',
             labelKey: 'file_manage.action_menu_properties',
             icon: <Info className="mr-2 h-4 w-4" />,
-            variants: ['default', 'trash'],
+            variants: ['default', 'trash', 'collection'],
             acceptMultiple: false,
             folderOnly: false,
             fileOnly: true,
         },
         {
+            action: 'rename',
+            labelKey: 'file_manage.action_menu_rename',
+            icon: <Edit className="mr-2 h-4 w-4" />,
+            variants: ['default', 'collection'],
+            acceptMultiple: false,
+            folderOnly: false,
+        },
+        {
             action: 'share',
             labelKey: 'file_manage.action_menu_share',
             icon: <Share2 className="mr-2 h-4 w-4" />,
-            variants: ['default'],
+            variants: ['default', 'collection'],
             acceptMultiple: false,
             folderOnly: false,
         },
@@ -46,7 +54,7 @@ export const ActionMenu = ({ pos, variant, isFolder = false, disableMultipleActi
             action: 'move',
             labelKey: 'file_manage.action_menu_move',
             icon: <Move className="mr-2 h-4 w-4" />,
-            variants: ['default'],
+            variants: ['default', 'collection'],
             acceptMultiple: true,
         },
         {
@@ -74,7 +82,14 @@ export const ActionMenu = ({ pos, variant, isFolder = false, disableMultipleActi
             action: 'download-zip',
             labelKey: 'file_manage.action_menu_download_zip',
             icon: <Download className="mr-2 h-4 w-4" />,
-            variants: ['default'],
+            variants: ['default', 'collection'],
+            acceptMultiple: true,
+        },
+        {
+            action: 'remove-from-collection',
+            labelKey: 'file_manage.action_menu_remove_from_collection',
+            icon: <Redo2 className="mr-2 h-4 w-4 text-orange-400" />,
+            variants: ['collection'],
             acceptMultiple: true,
         },
     ];

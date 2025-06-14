@@ -47,6 +47,7 @@ return [
     'feature_group_integrations' => 'Integrations',
     'feature_group_team' => 'Team Collaboration',
     'feature_group_account_manager' => 'Account Management',
+    'feature_group_download_limit' => 'Download Limit',
     // Footer Buttons
     'comparison_footer_button_current' => 'Current: :planName', // :planName
     'comparison_footer_button_choose' => 'Choose :planName', // :planName

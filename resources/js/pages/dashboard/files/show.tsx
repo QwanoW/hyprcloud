@@ -1,6 +1,7 @@
 import { FileDeleteDialog } from '@/components/file-manage/file-delete-dialog';
 import { FileIcon as CustomFileIcon } from '@/components/file-manage/file-icon';
 import { Files } from '@/components/file-manage/files';
+import { RenameDialog } from '@/components/file-manage/rename-dialog';
 import { ShareDialog } from '@/components/share-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
     const { actions, loading } = useFileActionMutations();
     const [currentFile] = useState<TFile | null>(file || null);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
     const fileSize = useFormatFileSize(currentFile?.size || 0);
     const locale = currentLocale();
 
@@ -42,7 +44,11 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
 
     const urlParams = new URLSearchParams(window.location.search);
     const sourcePage = urlParams.get('source');
-    const pageVariant = sourcePage?.includes('/dashboard/trash') ? 'trash' : 'default';
+    const pageVariant = sourcePage?.includes('/dashboard/trash')
+        ? 'trash'
+        : sourcePage?.includes('/dashboard/collections')
+          ? 'collection'
+          : 'default';
 
     const files = useAllFilesFromInfinite(filesQuery);
 
@@ -136,8 +142,6 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
         }
     };
 
-
-
     if (!currentFile) {
         return (
             <DashboardLayout breadcrumbs={breadcrumbs}>
@@ -194,23 +198,18 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
                         {currentFile.type === FileType.Image && (
                             <CardContent>
                                 <div className="space-y-4">
-                                    <div className="flex-col lg:flex-row gap-2 flex items-start lg:items-center justify-between">
+                                    <div className="flex flex-col items-start justify-between gap-2 lg:flex-row lg:items-center">
                                         <div className="flex items-center gap-2">
                                             <FileText className="text-primary h-5 w-5" />
                                             <h3 className="text-foreground text-lg font-semibold">{t('file_manage.preview')}</h3>
                                         </div>
-                                        <div className="gap-2 flex flex-wrap items-center">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             <Button onClick={handleDownload} variant="default" size="lg" className="bg-primary hover:bg-primary/90">
                                                 <Download className="mr-2 h-4 w-4" />
                                                 {t('file_manage.download')}
                                             </Button>
 
-                                            <Button
-                                                onClick={handleShare}
-                                                variant="secondary"
-                                                size="lg"
-                                                className="bg-accent hover:bg-accent/80"
-                                            >
+                                            <Button onClick={handleShare} variant="secondary" size="lg" className="bg-accent hover:bg-accent/80">
                                                 <Share2 className="mr-2 h-4 w-4" />
                                                 {t('file_manage.action_menu_share')}
                                             </Button>
@@ -304,13 +303,19 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
                     currentFolderId={currentFile?.type === FileType.Folder ? currentFile.id : undefined}
                 />
             </div>
+            {currentFile && <ShareDialog fileId={currentFile.id} open={shareDialogOpen} onOpenChange={setShareDialogOpen} />}
             {currentFile && (
-                <ShareDialog
-                    fileId={currentFile.id}
-                    open={shareDialogOpen}
-                    onOpenChange={setShareDialogOpen}
-                />
-            )}
+                 <RenameDialog
+                     file={currentFile}
+                     open={isRenameDialogOpen}
+                     onOpenChange={setIsRenameDialogOpen}
+                     onRename={(newName) => {
+                         // Handle rename logic here
+                         console.log('Renaming file to:', newName);
+                         setIsRenameDialogOpen(false);
+                     }}
+                 />
+             )}
         </DashboardLayout>
     );
 }

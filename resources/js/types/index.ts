@@ -177,7 +177,7 @@ export interface PlanFeature {
     updated_at: string;
 }
 
-export type OnAction = (action: 'show' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip' | 'move' | 'navigate' | 'properties') => void;
+export type OnAction = (action: 'show' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip' | 'move' | 'navigate' | 'properties' | 'remove-from-collection' | 'rename') => void;
 
 export interface Vacancy {
     id: number;

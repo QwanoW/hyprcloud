@@ -45,6 +45,6 @@ class TestimonialController extends Controller
 
         $testimonial->save();
 
-        return redirect()->back()->with('success', 'testimonials.success_message');
+        return redirect()->back();
     }
 }

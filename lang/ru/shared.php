@@ -6,6 +6,9 @@ return [
 
     // Download button
     'button_download' => 'Скачать',
+    'button_download_folder' => 'Скачать как ZIP',
+    'button_downloading' => 'Скачивание...',
+    'folder_preview_text' => 'Это папка, содержащая несколько файлов',
 
     // Forbidden page content
     'title' => 'Доступ запрещен',
@@ -26,6 +29,7 @@ return [
     'password_required' => 'Требуется пароль',
     'password_description' => 'Этот общий файл защищен паролем. Пожалуйста, введите пароль для доступа к нему.',
     'password' => 'Пароль',
+    'invalid_password' => 'Неправильный пароль',
     'enter_password' => 'Введите пароль',
     'accessing' => 'Получение доступа...',
     'access_file' => 'Получить доступ к файлу',

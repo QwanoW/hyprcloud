@@ -26,7 +26,7 @@ export interface FileManagerCreateFolderRequest {
 }
 
 export interface FileManagerIndexParams {
-  collection_id?: number;
+  collection_id?: number | null;
   parent_folder_id?: number;
   page?: number;
   per_page?: number;
@@ -59,7 +59,7 @@ export const fileManagerApi = {
     return response.data;
   },
 
-  move: async (id: number, data: { parent_folder_id?: number; collection_id?: number }): Promise<FileManagerItem> => {
+  move: async (id: number, data: { parent_folder_id?: number; collection_id?: number | null }): Promise<FileManagerItem> => {
     const response = await axios.put(`/api/file-manager/${id}/move`, data);
     return response.data;
   },
@@ -73,7 +73,7 @@ export const fileManagerApi = {
     await axios.delete(`/api/file-manager/${id}`);
   },
 
-  search: async (query: string): Promise<FileManagerItem[]> => {
+  search: async (query: string): Promise<{data: FileManagerItem[]}> => {
     const response = await axios.get('/api/files/search', { params: { q: query } });
     return response.data;
   },

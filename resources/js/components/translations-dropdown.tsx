@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { changeLocale } from '@/lib/locale';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
 import { Check, Globe } from 'lucide-react';
 import { HTMLAttributes } from 'react';
@@ -22,6 +23,11 @@ export default function TranslationsToggleDropdown({ className = '', ...props }:
     }
   };
 
+  const onChange = (locale: string) => {
+    setLocale(locale);
+    changeLocale(locale);
+  }
+
   return (
     <div className={className} {...props}>
       <DropdownMenu>
@@ -33,7 +39,7 @@ export default function TranslationsToggleDropdown({ className = '', ...props }:
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {locales.map((locale) => (
-            <DropdownMenuItem key={locale} onClick={() => setLocale(locale)}>
+            <DropdownMenuItem key={locale} onClick={() => onChange(locale)}>
               <span className="flex items-center gap-2">
                 {getLocaleLabel(locale)}
                 {currentLocale() === locale && <Check className="h-5 w-5" />}

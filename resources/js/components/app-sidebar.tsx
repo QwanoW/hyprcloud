@@ -16,7 +16,8 @@ import { RolesEnum, SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { ChartSpline, Image, LayoutGrid, Plus, Trash, FileSearch, Share2 } from 'lucide-react';
+// import {FileSearch} from 'lucide-react';
+import { ChartSpline, Image, LayoutGrid, Plus, Trash, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from './app-logo';
 import { CreateCollectionModal } from './file-manage/create-collection-modal';
@@ -51,11 +52,11 @@ export function AppSidebar() {
         },
     ];
     const othersNavItems: NavItem[] = [
-        {
-            title: t('breadcrumb.search'),
-            url: '/dashboard/search',
-            icon: FileSearch,
-        },
+        // {
+        //     title: t('breadcrumb.search'),
+        //     url: '/dashboard/search',
+        //     icon: FileSearch,
+        // },
         {
             title: t('breadcrumb.analytics'),
             url: '/dashboard/analytics',

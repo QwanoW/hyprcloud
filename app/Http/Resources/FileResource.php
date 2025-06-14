@@ -16,13 +16,20 @@ class FileResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Check if this is a shared context by looking for token in request
+        $sharedToken = $request->route('token');
+        
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'size' => $this->size,
+            'size' => $this->getRealSize(),
             'type' => $this->type,
             'path' => $this->path,
-            'url' => $this->path ? route('files.show', ['filepath' => $this->path]) : null,
+            'url' => $this->path ? (
+                $sharedToken ? 
+                route('shared.preview', ['token' => $sharedToken]) : 
+                route('files.show', ['filepath' => $this->path])
+            ) : null,
             'user_id' => $this->user_id,
             'trash' => $this->trash,
             'shared' => $this->isShared(),

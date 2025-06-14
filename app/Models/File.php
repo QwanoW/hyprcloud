@@ -97,6 +97,20 @@ class File extends Model
         return $this->type === FileTypeEnum::FOLDER;
     }
 
+    /**
+     * Calculate the real size of a folder by summing all files inside it recursively
+     */
+    public function getRealSize(): int
+    {
+        if (!$this->isFolder()) {
+            return $this->size;
+        }
+
+        return $this->children()->get()->sum(function ($child) {
+            return $child->getRealSize();
+        });
+    }
+
     public function allSubfolders(): HasMany
     {
         return $this->hasMany(File::class, 'parent_folder_id')

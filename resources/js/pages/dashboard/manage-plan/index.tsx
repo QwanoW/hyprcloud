@@ -176,8 +176,8 @@ export default function ManagePlan({ plans }: { plans: Plan[] }) {
                                 <CardDescription>{t('manage_plan.comparison_description')}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
+                            <div className="w-full max-w-[100vw] overflow-x-auto">
+  <table className="table-auto min-w-[700px]">
                                         <thead>
                                             <tr className="border-b">
                                                 <th className="px-4 py-4 text-left">{t('manage_plan.comparison_header_feature')}</th>
@@ -228,7 +228,7 @@ export default function ManagePlan({ plans }: { plans: Plan[] }) {
                                     </table>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-center gap-4">
+                            <CardFooter className="flex justify-center gap-4 flex-wrap">
                                 {plans.map((plan) => {
                                     const planName = getLocalizedField(plan, 'name', locale);
                                     return (

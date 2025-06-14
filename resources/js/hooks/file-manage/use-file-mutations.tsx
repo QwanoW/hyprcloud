@@ -92,7 +92,9 @@ export function useFileActionMutations() {
   const downloadZipMutation = useMutation({
     mutationFn: fileApi.downloadZip,
     onSuccess: (data) => {
-      downloadFile((data as { download_url: string }).download_url, 'files.zip');
+      const downloadUrl = (data as { download_url: string }).download_url;
+      const filename = downloadUrl.split('/').pop() || 'files.zip';
+      downloadFile(downloadUrl, filename);
       toast.success(t('file_manage.file_actions.download_started'));
     },
     onError: (error: Error) => {
@@ -112,6 +114,31 @@ export function useFileActionMutations() {
     }
   );
   
+  const removeFromCollectionMutation = useFileMutation(
+    (ids: number[]) => {
+      // Remove files from collection by setting collection_id to null
+      const promises = ids.map(id => 
+        fileManagerApi.move(id, { collection_id: null })
+      );
+      return Promise.all(promises);
+    },
+    {
+      loadingMessage: t('file_manage.file_actions.removing_from_collection'),
+      successMessage: t('file_manage.file_actions.removed_from_collection'),
+      toastId: 'remove-from-collection',
+    }
+  );
+  
+  const renameMutation = useFileMutation(
+    ({ id, name }: { id: number; name: string }) => 
+      fileManagerApi.updateName(id, { name }),
+    {
+      loadingMessage: t('file_manage.file_actions.renaming'),
+      successMessage: t('file_manage.file_actions.renamed'),
+      toastId: 'rename',
+    }
+  );
+  
   return {
     mutations: {
       trash: trashMutation,
@@ -119,6 +146,8 @@ export function useFileActionMutations() {
       restore: restoreMutation,
       downloadZip: downloadZipMutation,
       move: moveMutation,
+      removeFromCollection: removeFromCollectionMutation,
+      rename: renameMutation,
     },
     actions: {
       trash: (ids: number[]) => trashMutation.mutate(ids),
@@ -127,6 +156,8 @@ export function useFileActionMutations() {
       downloadZip: (ids: number[]) => downloadZipMutation.mutate(ids),
       move: (id: number, targetCollectionId?: number, targetFolderId?: number) => 
         moveMutation.mutate({ id, targetCollectionId, targetFolderId }),
+      removeFromCollection: (ids: number[]) => removeFromCollectionMutation.mutate(ids),
+      rename: (id: number, name: string) => renameMutation.mutate({ id, name }),
     },
     loading: {
       isTrashLoading: trashMutation.isPending,
@@ -134,6 +165,8 @@ export function useFileActionMutations() {
       isRestoreLoading: restoreMutation.isPending,
       isDownloadLoading: downloadZipMutation.isPending,
       isMoveLoading: moveMutation.isPending,
+      isRemoveFromCollectionLoading: removeFromCollectionMutation.isPending,
+      isRenameLoading: renameMutation.isPending,
     },
   };
 }

@@ -47,6 +47,7 @@ return [
     'feature_group_integrations' => 'Интеграции',
     'feature_group_team' => 'Командное сотрудничество',
     'feature_group_account_manager' => 'Управление аккаунтом',
+    'feature_group_download_limit' => 'Лимит загрузки',
     // Footer Buttons
     'comparison_footer_button_current' => 'Текущий: :planName',
     'comparison_footer_button_choose' => 'Выбрать :planName',

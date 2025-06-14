@@ -35,8 +35,6 @@ export function CreateFolderModal({
   const createMutation = useMutation({
     mutationFn: (data: { name: string; collection_id?: string; parent_folder_id?: string }) => fileManagerApi.createFolder(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['folders'] });
-      queryClient.invalidateQueries({ queryKey: ['folders', 'tree'] });
       queryClient.invalidateQueries({ queryKey: ['files'] });
       toast.success(t('file_manage.create_folder_success'));
       onOpenChange(false);

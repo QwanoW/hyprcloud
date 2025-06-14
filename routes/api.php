@@ -3,11 +3,10 @@
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
-use App\Http\Controllers\FolderController;
-use App\Http\Controllers\PageController;
 use App\Http\Controllers\SharedLinkController;
-use App\Http\Controllers\VacancyController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
 
 Route::middleware(['auth'])->prefix('api')->group(function() {
     // Unified file and folder management API endpoints
@@ -43,3 +42,13 @@ Route::middleware(['auth'])->prefix('api')->group(function() {
     Route::get('/files/{file}/shared-links', [SharedLinkController::class, 'getFileSharedLinks'])->name('api.files.shared-links');
     Route::get('/user/shared-links', [SharedLinkController::class, 'getUserSharedLinks'])->name('api.user.shared-links');
 });
+
+Route::post('/api/locale', function (Request $request) {
+    $request->validate(['locale' => 'required|string']);
+    
+    if (in_array($request->locale, config('app.available_locales'))) {
+        session(['locale' => $request->locale]);
+        return response()->json(['message' => 'success']);
+    }
+    return response()->json(['message' => 'unknown language'], 400);
+})->name('locale');

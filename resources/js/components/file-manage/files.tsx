@@ -6,6 +6,7 @@ import { FileDropzone } from '@/components/file-manage/file-dropzone';
 import { FilesList } from '@/components/file-manage/file-list';
 import { FileViewerModal } from '@/components/file-manage/file-viewer-modal';
 import { MoveDialog } from '@/components/file-manage/move-dialog';
+import { RenameDialog } from '@/components/file-manage/rename-dialog';
 import { ShareDialog } from '@/components/share-dialog';
 import { useFileActionMutations } from '@/hooks/file-manage';
 import { useFileActionMenu } from '@/hooks/file-manage/use-file-action-menu';
@@ -19,7 +20,7 @@ import { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 
 interface FilesProps {
-    variant?: 'default' | 'trash';
+    variant?: 'default' | 'trash' | 'collection';
     withActions?: boolean;
     files: TFile[];
     infiniteQuery?: UseInfiniteQueryResult<InfiniteData<FileManagerIndexResponse, unknown>, Error>;
@@ -49,6 +50,7 @@ export function Files({
     const [showCreateCollection, setShowCreateCollection] = useState(false);
     const [showCreateFolder, setShowCreateFolder] = useState(false);
     const [showMoveDialog, setShowMoveDialog] = useState(false);
+    const [showRenameDialog, setShowRenameDialog] = useState(false);
     const [showShareDialog, setShowShareDialog] = useState(false);
     const [shareFileId, setShareFileId] = useState<number | null>(null);
     const [fileViewerModal, setFileViewerModal] = useState<{ isOpen: boolean; files: TFile[]; initialFileId: number }>({ 
@@ -74,7 +76,7 @@ export function Files({
     };
 
     const onAction = useCallback(
-        async (action: 'show' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip' | 'move' | 'navigate' | 'properties' | 'share') => {
+        async (action: 'show' | 'restore' | 'delete' | 'delete-permanently' | 'download-zip' | 'move' | 'navigate' | 'properties' | 'share' | 'remove-from-collection' | 'rename') => {
             setActionMenuOpen(false); // Close menu on action
             if (action === 'navigate') {
                 const hashedId = btoa(selectedIds[0].toString());
@@ -95,6 +97,10 @@ export function Files({
                 actions.destroy(selectedIds);
             } else if (action === 'download-zip') {
                 actions.downloadZip(selectedIds);
+            } else if (action === 'remove-from-collection') {
+                actions.removeFromCollection(selectedIds);
+            } else if (action === 'rename') {
+                setShowRenameDialog(true);
             }
         },
         [actions, selectedIds, setActionMenuOpen],
@@ -201,6 +207,18 @@ export function Files({
                         if (!open) {
                             setShareFileId(null);
                         }
+                    }}
+                />
+            )}
+
+            {selectedIds.length === 1 && (
+                <RenameDialog
+                    file={files.find(f => f.id === selectedIds[0])!}
+                    open={showRenameDialog}
+                    onOpenChange={setShowRenameDialog}
+                    onRename={(newName) => {
+                        actions.rename(selectedIds[0], newName);
+                        setShowRenameDialog(false);
                     }}
                 />
             )}

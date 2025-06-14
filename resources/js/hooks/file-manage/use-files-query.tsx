@@ -2,7 +2,6 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { fileManagerApi } from '@/services/fileManagerApi';
 import { TFile } from '@/types';
 import { useMemo, useState } from 'react';
-
 type FileType = 'all' | 'gallery' | 'trash' | 'shared';
 
 interface UseFilesOptions {
@@ -62,7 +61,10 @@ export function useInfiniteFilesQuery(options: UseInfiniteFilesOptions = {}) {
 export function useFileSearchQuery(query: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['files', 'search', query],
-    queryFn: () => fileManagerApi.search(query),
+    queryFn: async () => {
+      const response = await fileManagerApi.search(query);
+      return response.data; // Assuming the actual file list is nested under 'data'
+    },
     enabled: enabled && query.length > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes for search results
     gcTime: 5 * 60 * 1000,

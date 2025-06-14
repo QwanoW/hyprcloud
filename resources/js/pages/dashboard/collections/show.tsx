@@ -57,6 +57,7 @@ export default function CollectionShow({ collectionId }: CollectionShowPageProps
             )}
 
             <Files
+                variant="collection"
                 files={files}
                 withActions={true}
                 infiniteQuery={filesQuery}

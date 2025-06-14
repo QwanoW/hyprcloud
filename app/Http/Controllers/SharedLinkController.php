@@ -6,10 +6,12 @@ use App\Models\File;
 use App\Models\SharedLink;
 use App\Models\User;
 use App\Http\Resources\FileResource;
+use App\Services\ZipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -28,7 +30,7 @@ class SharedLinkController extends Controller
         $file = File::findOrFail($request->file_id);
         
         if ($file->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $user = Auth::user();
@@ -36,14 +38,14 @@ class SharedLinkController extends Controller
 
         // Check if user can share files
         if (!$plan || !$plan->can_share_files) {
-            return response()->json(['error' => 'Sharing not available in your plan'], 403);
+            return response()->json(['error' => __('file_manage.sharing_not_available')], 403);
         }
 
         // Check shared links limit
         if ($plan->max_shared_links !== null) {
             $currentLinksCount = $user->sharedLinks()->where('is_active', true)->count();
             if ($currentLinksCount >= $plan->max_shared_links) {
-                return response()->json(['error' => 'Shared links limit exceeded'], 403);
+                return response()->json(['error' => __('file_manage.shared_links_limit_exceeded')], 403);
             }
         }
 
@@ -54,7 +56,7 @@ class SharedLinkController extends Controller
             
             if ($requestedExpiryDate->gt($maxExpiryDate)) {
                 return response()->json([
-                    'error' => 'Expiry date exceeds plan limit',
+                    'error' => __('file_manage.expiry_date_exceeds_limit'),
                     'max_expiry_date' => $maxExpiryDate->toISOString()
                 ], 422);
             }
@@ -86,7 +88,7 @@ class SharedLinkController extends Controller
     public function update(Request $request, SharedLink $sharedLink): JsonResponse
     {
         if ($sharedLink->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $request->validate([
@@ -106,7 +108,7 @@ class SharedLinkController extends Controller
             
             if ($requestedExpiryDate->gt($maxExpiryDate)) {
                 return response()->json([
-                    'error' => 'Expiry date exceeds plan limit',
+                    'error' => __('file_manage.expiry_date_exceeds_limit'),
                     'max_expiry_date' => $maxExpiryDate->toISOString()
                 ], 422);
             }
@@ -148,18 +150,18 @@ class SharedLinkController extends Controller
     public function destroy(SharedLink $sharedLink): JsonResponse
     {
         if ($sharedLink->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $sharedLink->delete();
 
-        return response()->json(['message' => 'Shared link deleted successfully']);
+        return response()->json(['message' => __('file_manage.shared_link_deleted')]);
     }
 
     public function getFileSharedLinks(File $file): JsonResponse
     {
         if ($file->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => __('file_manage.access_denied')], 403);
         }
 
         $sharedLinks = $file->sharedLinks()->get()->map(function ($link) {
@@ -218,7 +220,7 @@ class SharedLinkController extends Controller
         ]);
     }
 
-    public function download(string $token): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
+    public function download(string $token, ZipService $zipService): \Symfony\Component\HttpFoundation\BinaryFileResponse|JsonResponse
     {
         $sharedLink = SharedLink::where('token', $token)
             ->where('is_active', true)
@@ -234,14 +236,29 @@ class SharedLinkController extends Controller
         }
 
         $file = $sharedLink->file;
+        
+        // Increment access count
+        $sharedLink->incrementAccessCount();
+        
+        // If it's a folder, create zip archive
+        if ($file->isFolder()) {
+            $zipFileName = $zipService->generateZipFileName($file->name);
+            $zipPath = $zipService->getZipPath($zipFileName);
+            
+            $files = collect([$file]);
+            if (!$zipService->createZipFromFiles($files, $zipPath)) {
+                return response()->json(['error' => 'Archive creation failed'], 500);
+            }
+            
+            return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+        }
+        
+        // For regular files
         $filePath = storage_path('app/' . $file->path);
 
         if (!file_exists($filePath)) {
             return response()->json(['error' => 'File not found'], 404);
         }
-
-        // Increment access count
-        $sharedLink->incrementAccessCount();
 
         return response()->download($filePath, $file->name);
     }
@@ -290,11 +307,9 @@ class SharedLinkController extends Controller
         if ($sharedLink->password) {
             if ($request->isMethod('post')) {
                 $request->validate(['password' => 'required|string']);
-                
                 if (!$sharedLink->checkPassword($request->password)) {
-                    return Inertia::render('home/shared/password', [
-                        'token' => $token,
-                        'error' => 'Invalid password'
+                    throw ValidationException::withMessages([
+                        'password' => [__('shared.invalid_password')]
                     ]);
                 }
             } else {
@@ -314,5 +329,29 @@ class SharedLinkController extends Controller
                 'token' => $token
             ]
         ]);
+    }
+
+    /**
+     * Preview shared file content
+     */
+    public function preview(string $token)
+    {
+        $sharedLink = SharedLink::where('token', $token)
+            ->where('is_active', true)
+            ->with('file')
+            ->first();
+
+        if (!$sharedLink || !$sharedLink->isAccessible()) {
+            abort(404);
+        }
+
+        $file = $sharedLink->file;
+        $path = Storage::disk("local")->path($file->path);
+        
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
     }
 }

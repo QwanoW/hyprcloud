@@ -18,13 +18,15 @@ declare global {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const queryClient = new QueryClient();
 
+const locale = typeof window !== 'undefined' ? localStorage.getItem('locale') || 'en' : 'en';
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
         const appElement = (
-            <LaravelReactI18nProvider locale={'ru'} fallbackLocale={'en'} files={import.meta.glob('/lang/*.json')}>
+            <LaravelReactI18nProvider locale={locale} fallbackLocale={'en'} files={import.meta.glob('/lang/*.json')}>
                 <QueryClientProvider client={queryClient}>
                     <App {...props} />
                     <Toaster richColors />

@@ -61,7 +61,7 @@ class CollectionController extends Controller
     {
         $this->authorize('view', $collection);
 
-        $collection->load(['files', 'folders']);
+        $collection->load(['files']);
 
         return response()->json($collection);
     }
@@ -92,6 +92,6 @@ class CollectionController extends Controller
 
         $collection->delete();
 
-        return response()->json(['message' => 'Коллекция успешно удалена']);
+        return response()->json(['message' => __('file_manage.collection_deleted')]);
     }
 }
