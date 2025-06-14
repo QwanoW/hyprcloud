@@ -18,7 +18,10 @@ declare global {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const queryClient = new QueryClient();
 
-const locale = typeof window !== 'undefined' ? localStorage.getItem('locale') || 'en' : 'en';
+// get locale from local storage or navigator language
+const locale = typeof window !== 'undefined' 
+  ? localStorage.getItem('locale') || navigator.language?.split('-')[0] || 'en'
+  : 'en';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
