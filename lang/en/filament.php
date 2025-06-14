@@ -27,6 +27,13 @@ return [
                 'user' => 'User',
                 'collection' => 'Collection',
                 'parent_folder' => 'Parent Folder',
+                'preview' => 'Preview',
+                'file_preview' => 'File Preview',
+                'download' => 'Download',
+                'no_preview' => 'No preview available',
+                'no_preview_available' => 'Preview not available for this file type',
+                'video_not_supported' => 'Your browser does not support the video tag',
+                'audio_not_supported' => 'Your browser does not support the audio element'
             ],
             'table' => [
                 'name' => 'Name',
@@ -38,6 +45,13 @@ return [
                 'created_at' => 'Created',
                 'updated_at' => 'Updated',
                 'deleted_at' => 'Deleted',
+                'preview' => 'Preview',
+                'download' => 'Download',
+                'preview_title' => 'Preview: :name',
+                'no_preview' => 'No preview available',
+                'no_preview_available' => 'Preview not available for this file type',
+                'video_not_supported' => 'Your browser does not support the video tag',
+                'audio_not_supported' => 'Your browser does not support the audio element'
             ],
         ],
         'user' => [

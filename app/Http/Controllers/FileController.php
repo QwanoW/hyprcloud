@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\RolesEnum;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Enum\FileTypeEnum;
@@ -22,19 +23,27 @@ class FileController extends Controller
     public function show(Request $request, $filepath)
     {
         $pathUserId = (int)substr($filepath, 0, strrpos($filepath, '/'));
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userId = $user->id;
         $referer = $request->headers->get('referer');
         
         // Parse the referer URL to get just the path
         $refererPath = parse_url($referer, PHP_URL_PATH);
 
-        if (str_starts_with($refererPath, '/shared')) {
+        // Allow admin to view all files
+        if ($user->hasRole(RolesEnum::Admin)) {
+            // Continue to file serving
+        }
+        // Check shared files access
+        else if (str_starts_with($refererPath, '/shared')) {
             $file = File::where('path', $filepath)->first();
             
             if (!$file || !$file->shared) {
                 abort(403);
             }
-        } else {
+        }
+        // Check regular user access
+        else {
             if ($pathUserId !== $userId) {
                 abort(403);
             }

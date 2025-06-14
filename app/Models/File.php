@@ -97,6 +97,15 @@ class File extends Model
         return $this->type === FileTypeEnum::FOLDER;
     }
 
+    public function getUrlAttribute(): ?string
+    {
+        if (!$this->path) {
+            return null;
+        }
+
+        return route('files.show', ['filepath' => $this->path]);
+    }
+
     /**
      * Calculate the real size of a folder by summing all files inside it recursively
      */

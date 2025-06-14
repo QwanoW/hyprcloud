@@ -27,6 +27,13 @@ return [
                 'user' => 'Пользователь',
                 'collection' => 'Коллекция',
                 'parent_folder' => 'Родительская папка',
+                'preview' => 'Предпросмотр',
+                'file_preview' => 'Предпросмотр файла',
+                'download' => 'Скачать',
+                'no_preview' => 'Предпросмотр недоступен',
+                'no_preview_available' => 'Предпросмотр недоступен для этого типа файла',
+                'video_not_supported' => 'Ваш браузер не поддерживает видео',
+                'audio_not_supported' => 'Ваш браузер не поддерживает аудио'
             ],
             'table' => [
                 'name' => 'Имя',
@@ -38,6 +45,13 @@ return [
                 'created_at' => 'Создан',
                 'updated_at' => 'Обновлен',
                 'deleted_at' => 'Удален',
+                'preview' => 'Предпросмотр',
+                'download' => 'Скачать',
+                'preview_title' => 'Предпросмотр: :name',
+                'no_preview' => 'Предпросмотр недоступен',
+                'no_preview_available' => 'Предпросмотр недоступен для этого типа файла',
+                'video_not_supported' => 'Ваш браузер не поддерживает видео',
+                'audio_not_supported' => 'Ваш браузер не поддерживает аудио'
             ],
         ],
         'user' => [
