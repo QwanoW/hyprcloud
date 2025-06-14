@@ -76,7 +76,7 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
             if (collectionMatch) {
                 return [
                     {
-                        title: t('breadcrumb.collection'),
+                        title: t('breadcrumb.collections'),
                         href: '/dashboard/collections',
                     },
                     {
