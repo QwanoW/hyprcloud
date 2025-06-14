@@ -92,7 +92,7 @@ export const FilesList = ({ files, handleSelect, containerRef, infiniteQuery, so
         ));
     }, [files, viewMode, isRefetching, previousFiles, onFileDoubleClick]);
 
-    const containerClass = viewMode === 'list' ? 'flex flex-col space-y-1' : 'grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4';
+    const containerClass = viewMode === 'list' ? 'flex flex-col space-y-1' : 'grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4';
     
     return (
         <div className="h-full space-y-6 flex flex-col">
