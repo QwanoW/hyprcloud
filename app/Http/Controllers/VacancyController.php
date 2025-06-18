@@ -32,7 +32,7 @@ class VacancyController extends Controller
     {
         $vacancy = Vacancy::findOrFail($id);
         
-        return Inertia::render('career/show', [
+        return Inertia::render('home/career/show', [
             'vacancy' => $vacancy
         ]);
     }

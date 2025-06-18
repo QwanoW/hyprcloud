@@ -20,3 +20,20 @@ Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show')
 // Маршруты для страниц вакансий
 Route::get('/career', [VacancyController::class, 'index'])->name('career.index');
 Route::get('/career/{id}', [VacancyController::class, 'show'])->name('career.show');
+
+// Маршруты для дополнительных страниц
+Route::get('/docs', function () {
+    return Inertia::render('home/docs');
+})->name('docs');
+
+Route::get('/blog', function () {
+    return Inertia::render('home/blog');
+})->name('blog');
+
+Route::get('/support-center', function () {
+    return Inertia::render('home/support-center');
+})->name('support-center');
+
+Route::get('/status', function () {
+    return Inertia::render('home/status');
+})->name('status');

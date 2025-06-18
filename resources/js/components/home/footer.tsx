@@ -9,16 +9,14 @@ const linksData = {
     { name: "LinkedIn", href: "#" },
   ],
   product: [
-    { name: "Features", key: 'features', href: "#" },
-    { name: "Pricing", key: 'pricing', href: "#" },
-    { name: "Security", key: 'security', href: "#" },
-    { name: "Integrations", key: 'integrations', href: "#" },
+    { name: "Features", key: 'features', href: "#features" },
+    { name: "Pricing", key: 'pricing', href: "#pricing" },
   ],
   resources: [
-    { name: "Documentation", key: 'documentation', href: "#" },
-    { name: "Blog", key: 'blog', href: "#" },
-    { name: "Support Center", key: 'support', href: "#" },
-    { name: "Status", key: 'status', href: "#" },
+    { name: "Documentation", key: 'documentation', href: "/docs" },
+    { name: "Blog", key: 'blog', href: "/blog" },
+    { name: "Support Center", key: 'support', href: "/support-center" },
+    { name: "Status", key: 'status', href: "/status" },
   ],
   company: [
     { name: "About Us", key: 'about', href: "/pages/about-us" },

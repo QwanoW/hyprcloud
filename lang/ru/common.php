@@ -19,4 +19,14 @@ return [
     'success' => 'Успех',
     'warning' => 'Предупреждение',
     'info' => 'Информация',
+    
+    // --- Page Titles ---
+    'documentation' => 'Документация',
+    'blog' => 'Блог',
+    'support' => 'Центр поддержки',
+    'status' => 'Статус',
+    
+    // --- Development Messages ---
+    'under_development' => 'В разработке',
+    'under_development_description' => 'Эта страница находится в процессе разработки. Пожалуйста, зайдите позже.',
 ];
