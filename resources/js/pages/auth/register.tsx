@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
+import { Link } from '@inertiajs/react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -122,7 +123,20 @@ export default function Register() {
                                 htmlFor="terms"
                                 className="text-sm text-muted-foreground font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                                {t('auth.register_label_terms')}
+                                {t('auth.register_label_terms_prefix')}{' '}
+                                <Link 
+                                    href="/pages/terms-of-service" 
+                                    className="text-primary hover:underline"
+                                >
+                                    {t('auth.register_terms_link')}
+                                </Link>
+                                {' '}{t('auth.register_label_terms_and')}{' '}
+                                <Link 
+                                    href="/pages/privacy-policy" 
+                                    className="text-primary hover:underline"
+                                >
+                                    {t('auth.register_privacy_link')}
+                                </Link>
                             </label>
                             <InputError message={errors.terms_accepted} />
                         </div>

@@ -49,7 +49,7 @@ export default function VacancyPage({ vacancy }: VacancyPageProps) {
                                 {vacancy.published_at && (
                                     <div className="flex items-center">
                                         <Calendar size={18} className="text-primary/70 mr-2" />
-                                        <span>Posted: {new Date(vacancy.published_at).toLocaleDateString()}</span>
+                                        <span>{t('career.posted')}: {new Date(vacancy.published_at).toLocaleDateString()}</span>
                                     </div>
                                 )}
                             </div>

@@ -4,13 +4,13 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 
 const linksData = {
   social: [
-    { name: "Twitter", href: "#" },
-    { name: "Facebook", href: "#" },
-    { name: "LinkedIn", href: "#" },
+    { name: "Twitter", href: "https://twitter.com/hyprcloud" },
+    { name: "Facebook", href: "https://www.facebook.com/hyprcloud" },
+    { name: "LinkedIn", href: "https://www.linkedin.com/company/hyprcloud" },
   ],
   product: [
-    { name: "Features", key: 'features', href: "#features" },
-    { name: "Pricing", key: 'pricing', href: "#pricing" },
+    { name: "Features", key: 'features', href: "/#features" },
+    { name: "Pricing", key: 'pricing', href: "/#pricing" },
   ],
   resources: [
     { name: "Documentation", key: 'documentation', href: "/docs" },

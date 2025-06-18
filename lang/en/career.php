@@ -17,4 +17,5 @@ return [
     'how_to_apply' => 'How to Apply',
     'apply_text' => 'If you are interested in this position, please send your resume and cover letter to',
     'apply_subject' => 'Please include the position title in the subject line of your email.',
+    'posted' => 'Posted',
 ];
