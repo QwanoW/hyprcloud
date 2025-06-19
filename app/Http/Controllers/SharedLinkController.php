@@ -254,12 +254,11 @@ class SharedLinkController extends Controller
         }
         
         // For regular files
-        $filePath = storage_path('app/' . $file->path);
-
-        if (!file_exists($filePath)) {
+        if (!Storage::disk('local')->exists($file->path)) {
             return response()->json(['error' => 'File not found'], 404);
         }
 
+        $filePath = Storage::disk('local')->path($file->path);
         return response()->download($filePath, $file->name);
     }
 
