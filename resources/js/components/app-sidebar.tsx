@@ -16,7 +16,7 @@ import { RolesEnum, SharedData, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { useQuery } from '@tanstack/react-query';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { ChartSpline, Image, LayoutGrid, Plus, Trash, Share2, Search } from 'lucide-react';
+import { ChartSpline, Image, LayoutGrid, Plus, Trash, Share2, Search, HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from './app-logo';
 import { CreateCollectionModal } from './file-manage/create-collection-modal';
@@ -60,6 +60,11 @@ export function AppSidebar() {
             title: t('breadcrumb.analytics'),
             url: '/dashboard/analytics',
             icon: ChartSpline,
+        },
+        {
+            title: t('breadcrumb.help'),
+            url: '/dashboard/help',
+            icon: HelpCircle,
         },
     ];
 

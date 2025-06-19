@@ -9,5 +9,6 @@ return [
     'collections' => 'Collections',
     'others' => 'Others',
     'search' => 'Global search',
-    'shared' => 'Shared files'
+    'shared' => 'Shared files',
+    'help' => 'Help'
 ];

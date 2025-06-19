@@ -49,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard.search');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
         Route::get('usage', [AppController::class, 'usage'])->name('dashboard.usage');
+        Route::get('help', function () {
+            return Inertia::render('dashboard/help/index');
+        })->name('dashboard.help');
         
         // Collections routes
         Route::get('collections', function () {
