@@ -15,6 +15,13 @@ return [
     // -- FileList Component ---
     'list_empty' => 'No files found',
 
+    // --- Search Component ---
+    'search_placeholder' => 'Search files...',
+    'search_loading' => 'Searching...',
+    'search_no_results' => 'No files found matching your search.',
+    'search_enter_query' => 'Enter a search query to find files.',
+    'search_error' => 'An error occurred while searching. Please try again.',
+
     // -- Dropzone Component ---
     'dropzone_label' => 'Drag and drop your files here',
 

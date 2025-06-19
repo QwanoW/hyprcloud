@@ -15,6 +15,13 @@ return [
     // -- FileList Component ---
     'list_empty' => 'Файлы не найдены',
 
+    // --- Search Component ---
+    'search_placeholder' => 'Поиск файлов...',
+    'search_loading' => 'Поиск...',
+    'search_no_results' => 'Файлы, соответствующие вашему запросу, не найдены.',
+    'search_enter_query' => 'Введите поисковый запрос для поиска файлов.',
+    'search_error' => 'Произошла ошибка при поиске. Пожалуйста, попробуйте еще раз.',
+
     // -- Dropzone Component ---
     'dropzone_label' => 'Перетащите ваши файлы сюда',
 

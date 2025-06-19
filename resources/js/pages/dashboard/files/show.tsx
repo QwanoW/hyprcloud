@@ -71,6 +71,15 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
             ];
         }
 
+        if (sourcePage?.includes('/dashboard/search')) {
+            return [
+                {
+                    title: t('breadcrumb.search'),
+                    href: '/dashboard/search',
+                },
+            ];
+        }
+
         if (sourcePage?.includes('/dashboard/collections/')) {
             const collectionMatch = sourcePage.match(/\/dashboard\/collections\/(\d+)/);
             if (collectionMatch) {

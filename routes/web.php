@@ -44,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('gallery', [AppController::class, 'gallery'])->name('gallery');
         Route::get('trash', [AppController::class, 'trash'])->name('trash');
         Route::get('shared', [AppController::class, 'shared'])->name('shared');
+        Route::get('search', function () {
+            return Inertia::render('dashboard/search/index');
+        })->name('dashboard.search');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
         Route::get('usage', [AppController::class, 'usage'])->name('dashboard.usage');
         
