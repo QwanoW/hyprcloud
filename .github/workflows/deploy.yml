@@ -8,15 +8,19 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            set -e  # Остановить выполнение при ошибке
+          echo "Testing SSH connection..."
+          ssh -o StrictHostKeyChecking=no -v ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'echo "SSH connection successful"'
+          
+          echo "Starting deployment..."
+          ssh -o StrictHostKeyChecking=no -T ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
             
             echo "=== Starting deployment ==="
             
@@ -27,7 +31,6 @@ jobs:
             git pull origin main
             
             echo "=== Installing PHP dependencies ==="
-            # Удаляем сломанный vendor если есть проблемы
             if [ ! -f "vendor/autoload.php" ] || ! php vendor/autoload.php; then
               echo "Vendor directory is corrupted, reinstalling..."
               rm -rf vendor composer.lock
@@ -36,8 +39,6 @@ jobs:
             composer install --no-dev --optimize-autoloader --no-interaction
             
             echo "=== Installing Node dependencies and building assets ==="
-            
-            # Сначала пробуем Bun
             BUN_PATH="$HOME/.bun/bin/bun"
             
             if [ -f "$BUN_PATH" ]; then
@@ -53,13 +54,12 @@ jobs:
             fi
             
             echo "=== Running Laravel commands ==="
-            # Проверяем что artisan работает
             if php artisan --version; then
               php artisan migrate --force
               php artisan config:cache
               php artisan route:cache
               php artisan view:cache
-              php artisan storage:link || true  # Игнорируем ошибку если уже существует
+              php artisan storage:link || true
             else
               echo "Artisan not working, skipping Laravel commands"
             fi
