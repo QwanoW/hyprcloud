@@ -17,11 +17,16 @@ jobs:
 
       - name: Test SSH Connection
         run: |
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful'"
+          echo "Testing SSH connection..."
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful'" || exit 1
+          echo "SSH test completed"
 
       - name: Pull Latest Code
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          echo "Starting code pull..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
+            set -e
+            exec > >(tee /tmp/deploy.log) 2>&1
             echo '=== SSH session started ==='
             whoami
             pwd
@@ -29,18 +34,21 @@ jobs:
             ls -la /var/www/
             echo '=== Attempting to change directory ==='
             cd /var/www/hyprcloud || { echo 'Failed to cd to /var/www/hyprcloud'; exit 1; }
-            echo '=== Current directory: \$(pwd) ==='
+            echo '=== Current directory:' \$(pwd) '==='
             echo '=== Git status ==='
             git status || { echo 'Git command failed'; exit 1; }
             echo '=== Pulling latest code ==='
             git pull origin main
             echo '=== Git pull completed ==='
+            cat /tmp/deploy.log
           "
+          echo "Code pull completed"
 
       - name: Install PHP Dependencies
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -ex
+          echo "Installing PHP dependencies..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
+            set -e
             cd /var/www/hyprcloud
             echo '=== Installing PHP dependencies ==='
             if [ ! -f 'vendor/autoload.php' ]; then
@@ -50,11 +58,13 @@ jobs:
             composer install --no-dev --optimize-autoloader --no-interaction
             echo '=== PHP dependencies installed ==='
           "
+          echo "PHP dependencies installation completed"
 
       - name: Build Frontend Assets
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -ex
+          echo "Building frontend assets..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
+            set -e
             cd /var/www/hyprcloud
             echo '=== Building frontend assets ==='
             
@@ -77,11 +87,13 @@ jobs:
             fi
             echo '=== Frontend build completed ==='
           "
+          echo "Frontend build completed"
 
       - name: Run Laravel Commands
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -ex
+          echo "Running Laravel commands..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
+            set -e
             cd /var/www/hyprcloud
             echo '=== Running Laravel commands ==='
             
@@ -98,23 +110,29 @@ jobs:
             php artisan storage:link || echo 'Storage link already exists'
             echo '=== Laravel commands completed ==='
           "
+          echo "Laravel commands completed"
 
       - name: Restart Services
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -ex
+          echo "Restarting services..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
+            set -e
             echo '=== Restarting services ==='
             
             # Try different PHP-FPM versions
             if sudo systemctl is-active php8.4-fpm &> /dev/null; then
               sudo systemctl reload php8.4-fpm
+              echo 'Reloaded php8.4-fpm'
             elif sudo systemctl is-active php8.3-fpm &> /dev/null; then
               sudo systemctl reload php8.3-fpm
+              echo 'Reloaded php8.3-fpm'
             elif sudo systemctl is-active php8.2-fpm &> /dev/null; then
               sudo systemctl reload php8.2-fpm
+              echo 'Reloaded php8.2-fpm'
             else
               echo 'No PHP-FPM service found, skipping restart'
             fi
             
             echo '=== Deployment completed successfully ==='
           "
+          echo "Services restart completed"
