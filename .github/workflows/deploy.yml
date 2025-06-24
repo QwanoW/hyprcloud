@@ -18,30 +18,40 @@ jobs:
       - name: Test SSH Connection
         run: |
           echo "Testing SSH connection..."
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful'" || exit 1
+          # Добавляем более подробный вывод при ошибке
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful' && exit 0" || { echo "ERROR: SSH connection failed. Check host, user, and firewall."; exit 1; }
           echo "SSH test completed"
 
       - name: Pull Latest Code
         run: |
           echo "Starting code pull..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
-            set -e
-            exec > >(tee /tmp/deploy.log) 2>&1
-            echo '=== SSH session started ==='
-            whoami
-            pwd
-            echo '=== Checking directory permissions ==='
-            ls -la /var/www/
-            echo '=== Attempting to change directory ==='
-            cd /var/www/hyprcloud || { echo 'Failed to cd to /var/www/hyprcloud'; exit 1; }
-            echo '=== Current directory:' \$(pwd) '==='
-            echo '=== Git status ==='
-            git status || { echo 'Git command failed'; exit 1; }
-            echo '=== Pulling latest code ==='
-            git pull origin main
+            set -e # Выход при первой же ошибке в любой команде
+            exec > >(tee /tmp/deploy_pull.log) 2>&1 # Дублируем весь вывод в лог-файл и stdout
+
+            echo '=== SSH session started for Pull Latest Code ==='
+            echo 'User: $(whoami)'
+            echo 'Current directory: $(pwd)'
+            
+            echo '=== Checking /var/www/ permissions and content ==='
+            ls -la /var/www/ || { echo 'ERROR: Failed to list /var/www/'; exit 1; }
+            
+            echo '=== Attempting to change directory to /var/www/hyprcloud ==='
+            cd /var/www/hyprcloud || { echo 'ERROR: Failed to cd to /var/www/hyprcloud. Check path and permissions.'; exit 1; }
+            
+            echo '=== Current directory after cd: $(pwd) ==='
+            
+            echo '=== Git status before pull ==='
+            git status || { echo 'ERROR: Git status failed. Check if this is a git repo.'; exit 1; }
+            
+            echo '=== Pulling latest code from origin main ==='
+            git pull origin main || { echo 'ERROR: Git pull failed. Check remote, branch, and permissions.'; exit 1; }
             echo '=== Git pull completed ==='
-            cat /tmp/deploy.log
-          "
+            
+            echo '=== Content of /tmp/deploy_pull.log ==='
+            cat /tmp/deploy_pull.log # Выводим содержимое лог-файла в конце
+            echo '=== End of Pull Latest Code log ==='
+          " || { echo "ERROR: Pull Latest Code step failed on remote server."; exit 1; } # Если SSH команда завершилась с ошибкой
           echo "Code pull completed"
 
       - name: Install PHP Dependencies
@@ -49,15 +59,30 @@ jobs:
           echo "Installing PHP dependencies..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
             set -e
-            cd /var/www/hyprcloud
+            exec > >(tee /tmp/deploy_php_deps.log) 2>&1
+
             echo '=== Installing PHP dependencies ==='
-            if [ ! -f 'vendor/autoload.php' ]; then
-              echo 'Vendor directory missing, installing...'
-              rm -rf vendor composer.lock
+            cd /var/www/hyprcloud || { echo 'ERROR: Failed to cd to /var/www/hyprcloud for PHP dependencies.'; exit 1; }
+            
+            echo '=== Checking for Composer ==='
+            if ! command -v composer &> /dev/null; then
+              echo 'ERROR: Composer not found on the server. Please install Composer.'; exit 1;
             fi
-            composer install --no-dev --optimize-autoloader --no-interaction
+
+            if [ ! -f 'vendor/autoload.php' ]; then
+              echo 'Vendor directory missing or incomplete. Reinstalling Composer dependencies...'
+              rm -rf vendor composer.lock || { echo 'ERROR: Failed to remove vendor/composer.lock'; exit 1; }
+            else
+              echo 'Vendor directory found. Running composer install...'
+            fi
+            
+            composer install --no-dev --optimize-autoloader --no-interaction || { echo 'ERROR: Composer install failed. Check PHP version, extensions, and memory limits.'; exit 1; }
             echo '=== PHP dependencies installed ==='
-          "
+
+            echo '=== Content of /tmp/deploy_php_deps.log ==='
+            cat /tmp/deploy_php_deps.log
+            echo '=== End of PHP Dependencies log ==='
+          " || { echo "ERROR: PHP Dependencies step failed on remote server."; exit 1; }
           echo "PHP dependencies installation completed"
 
       - name: Build Frontend Assets
@@ -65,28 +90,34 @@ jobs:
           echo "Building frontend assets..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
             set -e
-            cd /var/www/hyprcloud
+            exec > >(tee /tmp/deploy_frontend.log) 2>&1
+
             echo '=== Building frontend assets ==='
+            cd /var/www/hyprcloud || { echo 'ERROR: Failed to cd to /var/www/hyprcloud for frontend build.'; exit 1; }
             
-            # Check for Bun
+            # Добавим более подробные проверки и сообщения об ошибках
             if command -v bun &> /dev/null; then
               echo 'Using system Bun for frontend build'
-              bun install
-              bun run build
+              bun install || { echo 'ERROR: Bun install failed.'; exit 1; }
+              bun run build || { echo 'ERROR: Bun build failed.'; exit 1; }
             elif [ -f \"\$HOME/.bun/bin/bun\" ]; then
               echo 'Using local Bun installation'
-              \$HOME/.bun/bin/bun install
-              \$HOME/.bun/bin/bun run build
+              \"\$HOME/.bun/bin/bun\" install || { echo 'ERROR: Local Bun install failed.'; exit 1; }
+              \"\$HOME/.bun/bin/bun\" run build || { echo 'ERROR: Local Bun build failed.'; exit 1; }
             elif command -v npm &> /dev/null; then
               echo 'Using npm for frontend build'
-              npm install
-              npm run build
+              npm install || { echo 'ERROR: Npm install failed.'; exit 1; }
+              npm run build || { echo 'ERROR: Npm build failed.'; exit 1; }
             else
-              echo 'ERROR: Neither Bun nor npm found'
+              echo 'ERROR: Neither Bun nor npm found. Please install one of them.'
               exit 1
             fi
             echo '=== Frontend build completed ==='
-          "
+
+            echo '=== Content of /tmp/deploy_frontend.log ==='
+            cat /tmp/deploy_frontend.log
+            echo '=== End of Frontend Assets log ==='
+          " || { echo "ERROR: Frontend Build step failed on remote server."; exit 1; }
           echo "Frontend build completed"
 
       - name: Run Laravel Commands
@@ -94,22 +125,40 @@ jobs:
           echo "Running Laravel commands..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
             set -e
-            cd /var/www/hyprcloud
+            exec > >(tee /tmp/deploy_laravel_commands.log) 2>&1 # Дублируем вывод в лог-файл
+
             echo '=== Running Laravel commands ==='
+            cd /var/www/hyprcloud || { echo 'ERROR: Failed to cd to /var/www/hyprcloud for Laravel commands.'; exit 1; }
             
-            # Check if artisan works
+            echo '=== Checking PHP Artisan ==='
+            php -v || { echo 'ERROR: PHP not found or broken. Check PHP installation.'; exit 1; }
             if ! php artisan --version; then
-              echo 'ERROR: Artisan not working'
+              echo 'ERROR: Artisan not working. Check PHP installation, Composer dependencies, and .env file.'
               exit 1
             fi
             
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan storage:link || echo 'Storage link already exists'
+            echo '=== Running php artisan migrate --force ==='
+            php artisan migrate --force || { echo 'ERROR: php artisan migrate failed. Check database connection, credentials, and migrations.'; exit 1; }
+            
+            echo '=== Running php artisan config:cache ==='
+            php artisan config:cache || { echo 'ERROR: php artisan config:cache failed. Check .env and config files.'; exit 1; }
+            
+            echo '=== Running php artisan route:cache ==='
+            php artisan route:cache || { echo 'ERROR: php artisan route:cache failed.'; exit 1; }
+            
+            echo '=== Running php artisan view:cache ==='
+            php artisan view:cache || { echo 'ERROR: php artisan view:cache failed.'; exit 1; }
+            
+            echo '=== Running php artisan storage:link ==='
+            # storage:link может выдать ошибку, если ссылка уже существует, но это не критично.
+            php artisan storage:link || echo 'NOTICE: Storage link already exists or failed gracefully.'
+            
             echo '=== Laravel commands completed ==='
-          "
+
+            echo '=== Content of /tmp/deploy_laravel_commands.log ==='
+            cat /tmp/deploy_laravel_commands.log # Выводим содержимое лог-файла в конце
+            echo '=== End of Laravel Commands log ==='
+          " || { echo "ERROR: Laravel Commands step failed on remote server."; exit 1; } # Если SSH команда завершилась с ошибкой
           echo "Laravel commands completed"
 
       - name: Restart Services
@@ -117,22 +166,37 @@ jobs:
           echo "Restarting services..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -c "
             set -e
+            exec > >(tee /tmp/deploy_service_restart.log) 2>&1
+
             echo '=== Restarting services ==='
             
-            # Try different PHP-FPM versions
-            if sudo systemctl is-active php8.4-fpm &> /dev/null; then
-              sudo systemctl reload php8.4-fpm
-              echo 'Reloaded php8.4-fpm'
-            elif sudo systemctl is-active php8.3-fpm &> /dev/null; then
-              sudo systemctl reload php8.3-fpm
-              echo 'Reloaded php8.3-fpm'
-            elif sudo systemctl is-active php8.2-fpm &> /dev/null; then
-              sudo systemctl reload php8.2-fpm
-              echo 'Reloaded php8.2-fpm'
-            else
-              echo 'No PHP-FPM service found, skipping restart'
+            # Проверяем и перезагружаем PHP-FPM
+            PHP_FPM_RELOADED=false
+            for version in 8.4 8.3 8.2; do
+              SERVICE_NAME=\"php${version}-fpm\"
+              if sudo systemctl is-active \"\$SERVICE_NAME\" &> /dev/null; then
+                echo \"Reloading \$SERVICE_NAME...\"
+                sudo systemctl reload \"\$SERVICE_NAME\" || { echo \"ERROR: Failed to reload \$SERVICE_NAME. Check sudo permissions.\"; exit 1; }
+                echo \"\$SERVICE_NAME reloaded.\"
+                PHP_FPM_RELOADED=true
+                break # Выходим после первой успешной перезагрузки
+              fi
+            done
+            
+            if [ \"\$PHP_FPM_RELOADED\" = \"false\" ]; then
+              echo 'WARNING: No active PHP-FPM service found (php8.4-fpm, php8.3-fpm, php8.2-fpm). Skipping PHP-FPM reload.'
             fi
+
+            # Добавьте перезагрузку вашего веб-сервера (Nginx/Apache), если необходимо
+            # if sudo systemctl is-active nginx &> /dev/null; then
+            #   echo 'Reloading Nginx...'
+            #   sudo systemctl reload nginx || { echo 'ERROR: Failed to reload Nginx. Check sudo permissions.'; exit 1; }
+            # fi
             
             echo '=== Deployment completed successfully ==='
-          "
+
+            echo '=== Content of /tmp/deploy_service_restart.log ==='
+            cat /tmp/deploy_service_restart.log
+            echo '=== End of Service Restart log ==='
+          " || { echo "ERROR: Service Restart step failed on remote server."; exit 1; }
           echo "Services restart completed"
