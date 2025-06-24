@@ -13,55 +13,44 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Deploy to Server
+- name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' << 'EOF'
-            set -e
-            
-            echo "=== Starting deployment ==="
-            
-            # Переходим в директорию проекта
-            cd /var/www/hyprcloud
-            
-            echo "=== Pulling latest code ==="
-            git pull origin main
-            
-            echo "=== Installing PHP dependencies ==="
-            if [ ! -f "vendor/autoload.php" ] || ! php vendor/autoload.php; then
-              echo "Vendor directory is corrupted, reinstalling..."
-              rm -rf vendor composer.lock
-            fi
-            
-            composer install --no-dev --optimize-autoloader --no-interaction
-            
-            echo "=== Installing Node dependencies and building assets ==="
-            BUN_PATH="$HOME/.bun/bin/bun"
-            
-            if [ -f "$BUN_PATH" ]; then
-              echo "Using Bun for frontend build"
-              $BUN_PATH install
-              $BUN_PATH run build
-            elif command -v npm &> /dev/null; then
-              echo "Using npm for frontend build"
-              npm install
-              npm run build
-            else
-              echo "Neither Bun nor npm found, skipping frontend build"
-            fi
-            
-            echo "=== Running Laravel commands ==="
-            if php artisan --version; then
-              php artisan migrate --force
-              php artisan config:cache
-              php artisan route:cache
-              php artisan view:cache
-              php artisan storage:link || true
-            else
-              echo "Artisan not working, skipping Laravel commands"
-            fi
-            
-            echo "=== Restarting services ==="
-            sudo systemctl reload php8.4-fpm
-            
-            echo "=== Deployment completed successfully ==="
-          EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e && \
+            echo '=== Starting deployment ===' && \
+            cd /var/www/hyprcloud && \
+            echo '=== Pulling latest code ===' && \
+            git pull origin main && \
+            echo '=== Installing PHP dependencies ===' && \
+            if [ ! -f 'vendor/autoload.php' ] || ! php vendor/autoload.php; then \
+              echo 'Vendor directory is corrupted, reinstalling...' && \
+              rm -rf vendor composer.lock; \
+            fi && \
+            composer install --no-dev --optimize-autoloader --no-interaction && \
+            echo '=== Installing Node dependencies and building assets ===' && \
+            BUN_PATH=\"\$HOME/.bun/bin/bun\" && \
+            if [ -f \"\$BUN_PATH\" ]; then \
+              echo 'Using Bun for frontend build' && \
+              \$BUN_PATH install && \
+              \$BUN_PATH run build; \
+            elif command -v npm &> /dev/null; then \
+              echo 'Using npm for frontend build' && \
+              npm install && \
+              npm run build; \
+            else \
+              echo 'Neither Bun nor npm found, skipping frontend build'; \
+            fi && \
+            echo '=== Running Laravel commands ===' && \
+            if php artisan --version; then \
+              php artisan migrate --force && \
+              php artisan config:cache && \
+              php artisan route:cache && \
+              php artisan view:cache && \
+              (php artisan storage:link || true); \
+            else \
+              echo 'Artisan not working, skipping Laravel commands'; \
+            fi && \
+            echo '=== Restarting services ===' && \
+            sudo systemctl reload php8.4-fpm && \
+            echo '=== Deployment completed successfully ==='
+          "
