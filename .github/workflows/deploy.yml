@@ -22,10 +22,16 @@ jobs:
       - name: Pull Latest Code
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -ex
-            echo '=== Starting deployment ==='
-            cd /var/www/hyprcloud
+            echo '=== SSH session started ==='
+            whoami
+            pwd
+            echo '=== Checking directory permissions ==='
+            ls -la /var/www/
+            echo '=== Attempting to change directory ==='
+            cd /var/www/hyprcloud || { echo 'Failed to cd to /var/www/hyprcloud'; exit 1; }
             echo '=== Current directory: \$(pwd) ==='
+            echo '=== Git status ==='
+            git status || { echo 'Git command failed'; exit 1; }
             echo '=== Pulling latest code ==='
             git pull origin main
             echo '=== Git pull completed ==='
