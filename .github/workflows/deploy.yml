@@ -15,11 +15,7 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Deploy to Server
         run: |
-          echo "Testing SSH connection..."
-          ssh -o StrictHostKeyChecking=no -v ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'echo "SSH connection successful"'
-          
-          echo "Starting deployment..."
-          ssh -o StrictHostKeyChecking=no -T ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' << 'EOF'
             set -e
             
             echo "=== Starting deployment ==="
