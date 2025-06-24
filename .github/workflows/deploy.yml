@@ -1,10 +1,11 @@
-name: Deploy Laravel to VPS
+name: Deploy
 on:
   push:
     branches: [main]
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -13,44 +14,101 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Deploy to Server
+
+      - name: Test SSH Connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful'"
+
+      - name: Pull Latest Code
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            set -e && \
-            echo '=== Starting deployment ===' && \
-            cd /var/www/hyprcloud && \
-            echo '=== Pulling latest code ===' && \
-            git pull origin main && \
-            echo '=== Installing PHP dependencies ===' && \
-            if [ ! -f 'vendor/autoload.php' ] || ! php vendor/autoload.php; then \
-              echo 'Vendor directory is corrupted, reinstalling...' && \
-              rm -rf vendor composer.lock; \
-            fi && \
-            composer install --no-dev --optimize-autoloader --no-interaction && \
-            echo '=== Installing Node dependencies and building assets ===' && \
-            BUN_PATH=\"\$HOME/.bun/bin/bun\" && \
-            if [ -f \"\$BUN_PATH\" ]; then \
-              echo 'Using Bun for frontend build' && \
-              \$BUN_PATH install && \
-              \$BUN_PATH run build; \
-            elif command -v npm &> /dev/null; then \
-              echo 'Using npm for frontend build' && \
-              npm install && \
-              npm run build; \
-            else \
-              echo 'Neither Bun nor npm found, skipping frontend build'; \
-            fi && \
-            echo '=== Running Laravel commands ===' && \
-            if php artisan --version; then \
-              php artisan migrate --force && \
-              php artisan config:cache && \
-              php artisan route:cache && \
-              php artisan view:cache && \
-              (php artisan storage:link || true); \
-            else \
-              echo 'Artisan not working, skipping Laravel commands'; \
-            fi && \
-            echo '=== Restarting services ===' && \
-            sudo systemctl reload php8.4-fpm && \
+            set -ex
+            echo '=== Starting deployment ==='
+            cd /var/www/hyprcloud
+            echo '=== Current directory: \$(pwd) ==='
+            echo '=== Pulling latest code ==='
+            git pull origin main
+            echo '=== Git pull completed ==='
+          "
+
+      - name: Install PHP Dependencies
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -ex
+            cd /var/www/hyprcloud
+            echo '=== Installing PHP dependencies ==='
+            if [ ! -f 'vendor/autoload.php' ]; then
+              echo 'Vendor directory missing, installing...'
+              rm -rf vendor composer.lock
+            fi
+            composer install --no-dev --optimize-autoloader --no-interaction
+            echo '=== PHP dependencies installed ==='
+          "
+
+      - name: Build Frontend Assets
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -ex
+            cd /var/www/hyprcloud
+            echo '=== Building frontend assets ==='
+            
+            # Check for Bun
+            if command -v bun &> /dev/null; then
+              echo 'Using system Bun for frontend build'
+              bun install
+              bun run build
+            elif [ -f \"\$HOME/.bun/bin/bun\" ]; then
+              echo 'Using local Bun installation'
+              \$HOME/.bun/bin/bun install
+              \$HOME/.bun/bin/bun run build
+            elif command -v npm &> /dev/null; then
+              echo 'Using npm for frontend build'
+              npm install
+              npm run build
+            else
+              echo 'ERROR: Neither Bun nor npm found'
+              exit 1
+            fi
+            echo '=== Frontend build completed ==='
+          "
+
+      - name: Run Laravel Commands
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -ex
+            cd /var/www/hyprcloud
+            echo '=== Running Laravel commands ==='
+            
+            # Check if artisan works
+            if ! php artisan --version; then
+              echo 'ERROR: Artisan not working'
+              exit 1
+            fi
+            
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan storage:link || echo 'Storage link already exists'
+            echo '=== Laravel commands completed ==='
+          "
+
+      - name: Restart Services
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -ex
+            echo '=== Restarting services ==='
+            
+            # Try different PHP-FPM versions
+            if sudo systemctl is-active php8.4-fpm &> /dev/null; then
+              sudo systemctl reload php8.4-fpm
+            elif sudo systemctl is-active php8.3-fpm &> /dev/null; then
+              sudo systemctl reload php8.3-fpm
+            elif sudo systemctl is-active php8.2-fpm &> /dev/null; then
+              sudo systemctl reload php8.2-fpm
+            else
+              echo 'No PHP-FPM service found, skipping restart'
+            fi
+            
             echo '=== Deployment completed successfully ==='
           "
