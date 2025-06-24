@@ -1,70 +1,78 @@
 name: Deploy Laravel to VPS
+
 on:
   push:
     branches: [main]
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Pinned to the latest major version
+
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@v0.9.0 # Pinned to the latest version
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            set -e  # Остановить выполнение при ошибке
-            
-            echo "=== Starting deployment ==="
-            
-            # Переходим в директорию проекта
+          # The -T flag is crucial for non-interactive sessions.
+          # We also add 'set -x' for verbose output, which helps in debugging.
+          ssh -T -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -ex  # Exit on error AND print each command before executing
+
+            echo "=== Starting deployment on $(hostname) ==="
+
+            # Navigate to the project directory
             cd /var/www/hyprcloud
-            
-            echo "=== Pulling latest code ==="
+
+            echo "=== Pulling latest code from main branch ==="
             git pull origin main
-            
-            echo "=== Installing PHP dependencies ==="
-            # Удаляем сломанный vendor если есть проблемы
-            if [ ! -f "vendor/autoload.php" ] || ! php vendor/autoload.php; then
-              echo "Vendor directory is corrupted, reinstalling..."
-              rm -rf vendor composer.lock
-            fi
-            
-            composer install --no-dev --optimize-autoloader --no-interaction
-            
+
+            echo "=== Installing PHP dependencies with Composer ==="
+            # Using --no-progress to reduce log noise
+            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
             echo "=== Installing Node dependencies and building assets ==="
-            
-            # Сначала пробуем Bun
-            BUN_PATH="$HOME/.bun/bin/bun"
-            
-            if [ -f "$BUN_PATH" ]; then
+            # Check for Bun first, then fall back to npm
+            if command -v $HOME/.bun/bin/bun &> /dev/null; then
               echo "Using Bun for frontend build"
-              $BUN_PATH install
-              $BUN_PATH run build
+              $HOME/.bun/bin/bun install --frozen-lockfile # Use --frozen-lockfile in CI/CD
+              $HOME/.bun/bin/bun run build
             elif command -v npm &> /dev/null; then
               echo "Using npm for frontend build"
-              npm install
+              # Use 'ci' for faster, more reliable installs in CI environments
+              npm ci
               npm run build
             else
-              echo "Neither Bun nor npm found, skipping frontend build"
+              echo "Neither Bun nor npm found, skipping frontend build."
             fi
-            
-            echo "=== Running Laravel commands ==="
-            # Проверяем что artisan работает
-            if php artisan --version; then
-              php artisan migrate --force
-              php artisan config:cache
-              php artisan route:cache
-              php artisan view:cache
-              php artisan storage:link || true  # Игнорируем ошибку если уже существует
+
+            echo "=== Running Laravel optimization commands ==="
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache # Good to cache events as well
+
+            # Check if storage link already exists before creating
+            if [ ! -L "public/storage" ]; then
+                echo "Creating storage link."
+                php artisan storage:link
             else
-              echo "Artisan not working, skipping Laravel commands"
+                echo "Storage link already exists."
             fi
-            
+
             echo "=== Restarting services ==="
-            sudo systemctl reload php8.4-fpm
+            # Use sudo only for the command that needs it.
+            # It's also good to check the PHP version on the server.
+            sudo systemctl reload php8.4-fpm # Make sure this version is correct!
             
+            # You might also want to restart Octane or Horizon if you use them
+            # php artisan octane:reload
+            # php artisan horizon:terminate
+
             echo "=== Deployment completed successfully ==="
           EOF
