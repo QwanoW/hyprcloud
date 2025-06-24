@@ -54,7 +54,7 @@ return [
     'file_upload.file_invalid_type' => 'Файл :name имеет недопустимый тип',
     'file_upload.too_many_files' => 'Слишком много файлов! Разрешено для загрузки не более 20 файлов за раз.',
     'file_upload.file_rejected' => 'Файл :name был отклонен: :reason',
-    'file_upload.uploading' => 'ЗаFгрузка файлов...',
+    'file_upload.uploading' => 'Загрузка файлов...',
     'file_upload.upload_success' => 'Файлы успешно загружены',
     'file_upload.upload_failed' => 'Не удалось загрузить файлы',
     'file_upload.name_taken' => 'Файл с именем :name уже существует',
