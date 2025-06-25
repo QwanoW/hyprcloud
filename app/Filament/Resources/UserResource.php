@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enum\RolesEnum;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
@@ -64,6 +65,18 @@ class UserResource extends Resource
                             ->required(fn (string $operation): bool => $operation === 'create')
                             ->dehydrated(fn ($state) => filled($state))
                             ->maxLength(255),
+                        Forms\Components\Select::make('role')
+                            ->label(__('filament.resources.user.form.role'))
+                            ->options(RolesEnum::labels())
+                            ->default(RolesEnum::User->value)
+                            ->required()
+                            ->afterStateHydrated(function (Forms\Components\Select $component, $record) {
+                                if ($record && $record->getRoleNames()->isNotEmpty()) {
+                                    $component->state($record->getRoleNames()->first());
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->live(),
                     ])->columns(2),
                 Forms\Components\Section::make(__('filament.resources.user.form.plan_info'))
                     ->schema([
@@ -112,6 +125,15 @@ class UserResource extends Resource
                     ->label(__('filament.resources.user.table.plan'))
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('roles.name')
+                    ->label(__('filament.resources.user.table.role'))
+                    ->formatStateUsing(fn ($state) => RolesEnum::tryFrom($state)?->label() ?? $state)
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        RolesEnum::Admin->value => 'danger',
+                        RolesEnum::User->value => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('storage_used_bytes')
                     ->label(__('filament.resources.user.table.storage_used_bytes'))
                     ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024 / 1024, 2) . ' MB' : '0 MB')

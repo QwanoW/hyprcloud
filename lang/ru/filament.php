@@ -70,6 +70,7 @@ return [
                 'storage_used_bytes' => 'Использовано места (байт)',
                 'files_count' => 'Количество файлов',
                 'storage_stats_updated_at' => 'Статистика обновлена',
+                'role' => 'Роль',
             ],
             'table' => [
                 'name' => 'Имя',
@@ -78,6 +79,7 @@ return [
                 'plan' => 'Тарифный план',
                 'storage_used_bytes' => 'Использовано места',
                 'files_count' => 'Количество файлов',
+                'role' => 'Роль',
                 'created_at' => 'Создан',
                 'updated_at' => 'Обновлен',
             ],

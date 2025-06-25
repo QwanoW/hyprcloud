@@ -70,6 +70,7 @@ return [
                 'storage_used_bytes' => 'Storage Used (bytes)',
                 'files_count' => 'Files Count',
                 'storage_stats_updated_at' => 'Storage Stats Updated At',
+                'role' => 'Role',
             ],
             'table' => [
                 'name' => 'Name',
@@ -78,6 +79,7 @@ return [
                 'plan' => 'Plan',
                 'storage_used_bytes' => 'Storage Used',
                 'files_count' => 'Files Count',
+                'role' => 'Role',
                 'created_at' => 'Created At',
                 'updated_at' => 'Updated At',
             ],
