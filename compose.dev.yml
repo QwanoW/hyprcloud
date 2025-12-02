@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    container_name: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - laravel
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel-nginx
+    restart: unless-stopped
+    ports:
+      - '8000:80'
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/conf.d/app.dev.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge

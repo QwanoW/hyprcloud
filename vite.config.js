@@ -16,18 +16,11 @@ export default defineConfig({
         tailwindcss(),
         i18n(),
         compression({
-            algorithm: 'gzip',
-            ext: '.gz',
-            threshold: 10240, // минимальный размер файла в байтах для сжатия (10 KiB)
-            deleteOriginFile: false, // оставить оригинальные файлы
-        }),
-        // второй экземпляр — Brotli
-        compression({
             algorithm: 'brotliCompress',
             ext: '.br',
-            threshold: 10240, // тоже от 10KiB
+            threshold: 10240,
             brotliOptions: {
-                level: 11, // максимальный уровень сжатия
+                level: 11,
             },
             deleteOriginFile: false,
         }),
