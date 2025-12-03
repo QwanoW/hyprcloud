@@ -31,7 +31,7 @@ CMD ["php-fpm"]
 # --- Stage 4: Production ---
 FROM base AS prod
 
-COPY .docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
+COPY ./docker/php/production.ini /usr/local/etc/php/conf.d/production.ini
 COPY . .
 COPY --from=frontend_build /app/public/build /var/www/html/public/build
 RUN composer install --no-dev --optimize-autoloader --no-scripts
