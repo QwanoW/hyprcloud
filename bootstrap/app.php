@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             Localization::class,
         ]);
+
+        $middleware->trustProxies(at: [
+            '*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
