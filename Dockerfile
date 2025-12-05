@@ -8,9 +8,34 @@ RUN bun run build
 
 # --- Stage 2: Base PHP ---
 FROM php:8.4-fpm-alpine AS base
+
+RUN apk add --no-cache \
+    bash \
+    git \
+    curl \
+    unzip \
+    zip \
+    icu-libs \
+    libzip \
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    libavif \
+    libwebp \
+    libxpm \
+    libgomp
+
+RUN apk add --no-cache --virtual .build-deps \
+    $PHPIZE_DEPS \
+    linux-headers
+
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-RUN install-php-extensions pdo_sqlite mbstring exif pcntl bcmath gd zip intl
-RUN apk add --no-cache bash git curl unzip zip
+
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    install-php-extensions gd intl zip pdo_mysql bcmath exif pcntl
+
+RUN apk del .build-deps
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
@@ -34,7 +59,8 @@ FROM base AS prod
 COPY ./docker/php/php.production.ini /usr/local/etc/php/conf.d/production.ini
 COPY . .
 COPY --from=frontend_build /app/public/build /var/www/html/public/build
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN rm -rf .git && \
+    composer install --no-dev --optimize-autoloader --no-scripts
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache

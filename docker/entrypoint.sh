@@ -9,6 +9,8 @@ if [ ! -f /var/www/html/storage/database.sqlite ]; then
     chown www-data:www-data /var/www/html/storage/database.sqlite
 fi
 
+php artisan optimize:clear
+
 echo "Caching configuration..."
 php artisan config:cache
 php artisan route:cache
