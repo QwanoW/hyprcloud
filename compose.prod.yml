@@ -1,6 +1,7 @@
 services:
   app:
     image: ghcr.io/qwanow/hyprcloud:latest
+    pull_policy: always
     restart: always
     env_file: .env
     volumes:
