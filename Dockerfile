@@ -50,7 +50,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel -u 1000
 USER laravel
 
-ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]
 
 # --- Stage 4: Production ---

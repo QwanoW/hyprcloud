@@ -24,4 +24,4 @@ yarn-error.log
 /.zed
 /.trae
 lang/php_*.json
-./database/database.sqlite
+/storage/database.sqlite
