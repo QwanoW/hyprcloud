@@ -131,10 +131,6 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
         }
     };
 
-    const handleShare = () => {
-        setShareDialogOpen(true);
-    };
-
     const handleDownload = () => {
         if (currentFile) {
             window.open(currentFile.url, '_blank');
