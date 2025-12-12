@@ -27,12 +27,6 @@ class Vacancy extends Model
         'published_at' => 'datetime',
     ];
 
-    /**
-     * Получить только активные вакансии
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

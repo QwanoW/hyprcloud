@@ -24,6 +24,7 @@ return new class extends Migration
             $table->boolean('shared')->default(false);
             $table->timestamps();
             $table->softDeletes();
+            $table->index('path');
         });
     }
 

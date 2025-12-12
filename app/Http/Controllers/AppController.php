@@ -56,7 +56,6 @@ class AppController extends Controller
             abort(404);
         }
         
-        // Build breadcrumb path by traversing up the folder hierarchy
         $breadcrumbPath = [];
         $currentParent = $file->parentFolder;
         

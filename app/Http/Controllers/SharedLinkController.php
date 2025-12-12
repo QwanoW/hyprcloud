@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\File;
 use App\Models\SharedLink;
-use App\Models\User;
 use App\Http\Resources\FileResource;
 use App\Services\ZipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -202,7 +200,6 @@ class SharedLinkController extends Controller
             }
         }
 
-        // Increment access count
         $sharedLink->incrementAccessCount();
 
         return response()->json([
@@ -237,7 +234,6 @@ class SharedLinkController extends Controller
 
         $file = $sharedLink->file;
         
-        // Increment access count
         $sharedLink->incrementAccessCount();
         
         // If it's a folder, create zip archive
@@ -253,7 +249,6 @@ class SharedLinkController extends Controller
             return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
         }
         
-        // For regular files
         if (!Storage::disk('local')->exists($file->path)) {
             return response()->json(['error' => 'File not found'], 404);
         }
@@ -288,9 +283,6 @@ class SharedLinkController extends Controller
         ]);
     }
 
-    /**
-     * Access shared file page via Inertia
-     */
     public function accessPage(Request $request, string $token)
     {
         $sharedLink = SharedLink::where('token', $token)
@@ -330,9 +322,6 @@ class SharedLinkController extends Controller
         ]);
     }
 
-    /**
-     * Preview shared file content
-     */
     public function preview(string $token)
     {
         $sharedLink = SharedLink::where('token', $token)

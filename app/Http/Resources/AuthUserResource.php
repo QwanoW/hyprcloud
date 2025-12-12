@@ -11,11 +11,6 @@ class AuthUserResource extends JsonResource
 {
     public static $wrap = false;
 
-    /**
-     * Преобразует ресурс в массив.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
 

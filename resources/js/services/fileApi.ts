@@ -36,7 +36,6 @@ interface DownloadZipResponse {
 }
 
 export const fileApi = {
-  // Unified method to get files with different filters
   getFiles: async (params?: {
     page?: number;
     per_page?: number;
@@ -47,39 +46,68 @@ export const fileApi = {
     folder_id?: number;
   }): Promise<FileResponse> => {
     const { type = 'all', ...otherParams } = params || {};
-    
+
     let endpoint = '/api/files';
     if (type === 'gallery') {
       endpoint = '/api/files/gallery';
     } else if (type === 'trash') {
       endpoint = '/api/files/trash';
     }
-    
+
     const response = await axios.get(endpoint, { params: otherParams });
     return response.data;
   },
 
   // Upload files
   uploadFiles: async (files: File[], collectionId?: number, parentFolderId?: number): Promise<FileUploadResponse> => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append('files[]', file);
-    });
-    
-    if (collectionId) {
-      formData.append('collection_id', collectionId.toString());
-    }
-    
-    if (parentFolderId) {
-      formData.append('parent_folder_id', parentFolderId.toString());
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
+    const uploadedFiles: TFile[] = [];
+
+    for (const file of files) {
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const uploadId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      let fileResponse: TFile | null = null;
+
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append('file', chunk);
+        formData.append('chunk_index', chunkIndex.toString());
+        formData.append('total_chunks', totalChunks.toString());
+        formData.append('upload_id', uploadId);
+        formData.append('original_name', file.name);
+
+        if (collectionId) {
+          formData.append('collection_id', collectionId.toString());
+        }
+
+        if (parentFolderId) {
+          formData.append('parent_folder_id', parentFolderId.toString());
+        }
+
+        const response = await axios.post('/api/files/chunk', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (response.data.completed) {
+          fileResponse = response.data.file;
+        }
+      }
+
+      if (fileResponse) {
+        uploadedFiles.push(fileResponse);
+      }
     }
 
-    const response = await axios.post('/api/files', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
+    return {
+      message: 'Files uploaded successfully',
+      files: uploadedFiles
+    };
   },
 
   // Update file
@@ -89,7 +117,7 @@ export const fileApi = {
     file?: File;
   }): Promise<FileUpdateResponse> => {
     const formData = new FormData();
-    
+
     if (data.name !== undefined) formData.append('name', data.name);
     if (data.trash !== undefined) formData.append('trash', data.trash.toString());
     if (data.file) formData.append('file', data.file);
@@ -166,7 +194,7 @@ export const fileApi = {
   },
 
   getFileSharedLinks: async (fileId: number) => {
-    const response = await axios.get<{shared_links: SharedLink[]}>(`/api/files/${fileId}/shared-links`);
+    const response = await axios.get<{ shared_links: SharedLink[] }>(`/api/files/${fileId}/shared-links`);
     return response.data.shared_links;
   },
 

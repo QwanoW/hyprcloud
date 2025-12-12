@@ -10,7 +10,6 @@ class PlanSeeder extends Seeder
 {
     public function run(): void
     {
-        // Define feature groups and their implementations for each plan
         $featureGroups = [
             'storage' => [
                 'Free' => ['name_en' => '2GB storage', 'name_ru' => '2 ГБ хранилище', 'popular' => true],
@@ -93,7 +92,6 @@ class PlanSeeder extends Seeder
             ],
         ];
 
-        // Create plans and add features based on groups
         foreach ($plans as $planData) {
             $plan = Plan::create([
                 'name_en' => $planData['name_en'],
@@ -115,11 +113,9 @@ class PlanSeeder extends Seeder
                 'shared_link_expiry_days' => $planData['shared_link_expiry_days'],
             ]);
 
-            // Add features from each group to this plan
             foreach ($featureGroups as $groupKey => $groupFeatures) {
                 $featureData = $groupFeatures[$planData['name_en']];
 
-                // Set included to true by default unless explicitly set to false
                 $included = isset($featureData['included']) ? $featureData['included'] : true;
 
                 PlanFeature::create([
@@ -128,7 +124,7 @@ class PlanSeeder extends Seeder
                     'plan_id'  => $plan->id,
                     'popular'  => $featureData['popular'],
                     'included' => $included,
-                    'group'    => $groupKey,  // Add group identifier
+                    'group'    => $groupKey,
                 ]);
             }
         }

@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class CollectionController extends Controller
 {
     use AuthorizesRequests;
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
         $collections = Collection::where('user_id', Auth::id())
@@ -22,9 +20,6 @@ class CollectionController extends Controller
         return response()->json(['data' => $collections]);
     }
 
-    /**
-     * Get recent collections for sidebar (last 5)
-     */
     public function recent()
     {
         $collections = Collection::where('user_id', Auth::id())
@@ -35,9 +30,6 @@ class CollectionController extends Controller
         return response()->json(['data' => $collections]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -54,9 +46,6 @@ class CollectionController extends Controller
         return response()->json($collection, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Collection $collection)
     {
         $this->authorize('view', $collection);
@@ -66,9 +55,6 @@ class CollectionController extends Controller
         return response()->json($collection);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Collection $collection)
     {
         $this->authorize('update', $collection);
@@ -83,9 +69,6 @@ class CollectionController extends Controller
         return response()->json($collection);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Collection $collection)
     {
         $this->authorize('delete', $collection);

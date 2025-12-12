@@ -9,11 +9,6 @@ class FileResource extends JsonResource
 {
     public static $wrap = false;
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         // Check if this is a shared context by looking for token in request

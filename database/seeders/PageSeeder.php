@@ -20,7 +20,6 @@ class PageSeeder extends Seeder
             'slug' => 'privacy-policy',
             'title_en' => 'Privacy Policy',
             'title_ru' => 'Политика конфиденциальности',
-            // Убран лишний отступ в начале строк внутри MARKDOWN
             'content_en' => <<<MARKDOWN
 # Privacy Policy
 
@@ -104,7 +103,6 @@ We may update this Privacy Policy periodically to reflect changes in our practic
 
 If you have any questions or concerns about this Privacy Policy, please contact us at privacy@hyprcloud.com.
 MARKDOWN,
-            // Убран лишний отступ в начале строк внутри MARKDOWN
             'content_ru' => <<<MARKDOWN
 # Политика конфиденциальности
 
@@ -191,12 +189,10 @@ MARKDOWN,
             'last_updated' => Carbon::now(),
         ]);
 
-        // Terms of Service - ИСПРАВЛЕНИЕ ПРИМЕНЕНО ЗДЕСЬ
         Page::create([
             'slug' => 'terms-of-service',
             'title_en' => 'Terms of Service',
             'title_ru' => 'Условия использования',
-            // Убран лишний отступ в начале строк внутри MARKDOWN
             'content_en' => <<<MARKDOWN
 # Terms of Service
 
@@ -292,7 +288,6 @@ We may update these Terms from time to time. We will notify you of material chan
 
 If you have any questions about these Terms, please contact us at legal@hyprcloud.com.
 MARKDOWN,
-            // Убран лишний отступ в начале строк внутри MARKDOWN
             'content_ru' => <<<MARKDOWN
 # Условия использования
 
@@ -395,7 +390,6 @@ MARKDOWN,
             'slug' => 'about-us',
             'title_en' => 'About Us',
             'title_ru' => 'О нас',
-            // Здесь отступы изначально были корректными
             'content_en' => <<<MARKDOWN
 # About Hyprcloud
 
@@ -459,7 +453,6 @@ Email: info@hyprcloud.com
 Support: support@hyprcloud.com
 Phone: +1 (555) 123-4567
 MARKDOWN,
-             // Здесь отступы изначально были корректными
             'content_ru' => <<<MARKDOWN
 # О нас
 

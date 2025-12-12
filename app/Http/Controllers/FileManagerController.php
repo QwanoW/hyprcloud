@@ -14,9 +14,6 @@ class FileManagerController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Get files and folders for a specific location
-     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 50);
@@ -48,22 +45,18 @@ class FileManagerController extends Controller
                 break;
         }
 
-        // Filter by collection if provided
         if ($collectionId) {
             $query->where('collection_id', $collectionId);
         }
 
-        // Filter by parent folder if provided (only for non-trash views)
         if ($type !== 'trash') {
             if ($parentFolderId) {
                 $query->where('parent_folder_id', $parentFolderId);
             } else {
-                // If no parent folder specified, get root level items
                 $query->whereNull('parent_folder_id');
             }
         }
 
-        // Order folders first, then files (except for trash view)
         if ($type !== 'trash') {
             $query->orderByRaw("CASE WHEN type = 'folder' THEN 0 ELSE 1 END");
         }
@@ -96,9 +89,6 @@ class FileManagerController extends Controller
         ]);
     }
 
-    /**
-     * Create a new folder
-     */
     public function createFolder(Request $request): JsonResponse
     {
         $request->validate([
@@ -107,7 +97,6 @@ class FileManagerController extends Controller
             'parent_folder_id' => 'nullable|exists:files,id',
         ]);
 
-        // Verify parent folder belongs to user and is actually a folder
         if ($request->parent_folder_id) {
             $parentFolder = File::where('id', $request->parent_folder_id)
                 ->where('user_id', Auth::id())
@@ -133,9 +122,6 @@ class FileManagerController extends Controller
         return response()->json(new FileResource($folder), 201);
     }
 
-    /**
-     * Get folder tree for move operations
-     */
     public function tree(Request $request): JsonResponse
     {
         $collectionId = $request->input('collection_id');
@@ -154,9 +140,6 @@ class FileManagerController extends Controller
         return response()->json(FileResource::collection($folders));
     }
 
-    /**
-     * Move file or folder to a new location
-     */
     public function move(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -168,7 +151,6 @@ class FileManagerController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        // Verify parent folder belongs to user and is actually a folder
         if ($request->parent_folder_id) {
             $parentFolder = File::where('id', $request->parent_folder_id)
                 ->where('user_id', Auth::id())
@@ -179,7 +161,6 @@ class FileManagerController extends Controller
                 return response()->json(['error' => __('file_manage.invalid_parent_folder')], 422);
             }
 
-            // Prevent moving a folder into itself or its descendants
             if ($file->type === FileTypeEnum::FOLDER) {
                 if ($this->isDescendantOf($request->parent_folder_id, $file->id)) {
                     return response()->json(['error' => __('file_manage.cannot_move_folder_into_itself')], 422);
@@ -195,9 +176,6 @@ class FileManagerController extends Controller
         return response()->json(new FileResource($file));
     }
 
-    /**
-     * Check if a folder is a descendant of another folder
-     */
     private function isDescendantOf($potentialDescendantId, $ancestorId): bool
     {
         $current = File::find($potentialDescendantId);
@@ -212,9 +190,6 @@ class FileManagerController extends Controller
         return false;
     }
 
-    /**
-     * Update file or folder name
-     */
     public function updateName(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -230,16 +205,12 @@ class FileManagerController extends Controller
         return response()->json(new FileResource($file));
     }
 
-    /**
-     * Delete file or folder
-     */
     public function destroy($id): JsonResponse
     {
         $file = File::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        // If it's a folder, delete all contents recursively
         if ($file->type === FileTypeEnum::FOLDER) {
             $this->deleteFolder($file);
         } else {
@@ -249,12 +220,8 @@ class FileManagerController extends Controller
         return response()->json(['message' => __('file_manage.item_deleted')]);
     }
 
-    /**
-     * Recursively delete folder and all its contents
-     */
     private function deleteFolder(File $folder): void
     {
-        // Delete all children (files and subfolders)
         $children = File::where('parent_folder_id', $folder->id)->get();
         
         foreach ($children as $child) {
@@ -265,7 +232,6 @@ class FileManagerController extends Controller
             }
         }
         
-        // Delete the folder itself
         $folder->delete();
     }
 }

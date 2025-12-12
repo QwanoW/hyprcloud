@@ -22,34 +22,16 @@ class FileController extends Controller
 
     public function show(Request $request, $filepath)
     {
-        $pathUserId = (int)substr($filepath, 0, strrpos($filepath, '/'));
-        $user = Auth::user();
-        $userId = $user->id;
-        $referer = $request->headers->get('referer');
-        
-        // Parse the referer URL to get just the path
-        $refererPath = parse_url($referer, PHP_URL_PATH);
+        $file = File::where('path', $filepath)->firstOrFail();
 
-        // Allow admin to view all files
-        if ($user->hasRole(RolesEnum::Admin)) {
-            // Continue to file serving
-        }
-        // Check shared files access
-        else if (str_starts_with($refererPath, '/shared')) {
-            $file = File::where('path', $filepath)->first();
-            
-            if (!$file || !$file->shared) {
-                abort(403);
-            }
-        }
-        // Check regular user access
-        else {
-            if ($pathUserId !== $userId) {
-                abort(403);
-            }
+        $user = Auth::user();
+
+        if ($file->user_id !== $user->id && !$user->hasRole(RolesEnum::Admin)) {
+            abort(403);
         }
 
         $path = Storage::disk("local")->path($filepath);
+
         if (!file_exists($path)) {
             abort(404);
         }
@@ -62,23 +44,22 @@ class FileController extends Controller
     {
         $user = Auth::user();
         $plan = $user->plan;
-        
-        // Validate files array and optional parameters
+
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'file|max:' . ($plan->max_file_size_bytes / 1024), // Convert MB to KB for Laravel validation
             'collection_id' => 'nullable|exists:collections,id',
             'parent_folder_id' => 'nullable|exists:files,id',
         ]);
-        
+
         $uploadedFiles = [];
         $totalUploadSize = 0;
-        
+
         // Calculate total size of files being uploaded
         foreach ($request->file('files') as $uploadedFile) {
             $totalUploadSize += $uploadedFile->getSize();
         }
-        
+
         // Check if user has enough storage space
         if (!$user->hasStorageSpace($totalUploadSize)) {
             $neededSpace = number_format(($user->storage_used_bytes + $totalUploadSize - $plan->storage_limit_bytes) / (1024 * 1024), 2);
@@ -87,11 +68,11 @@ class FileController extends Controller
                 'error' => 'storage_limit_exceeded'
             ], 422);
         }
-    
+
         foreach ($request->file('files') as $uploadedFile) {
             $mimeType = $uploadedFile->getMimeType();
             $fileType = FileTypeEnum::OTHER;
-    
+
             if (str_starts_with($mimeType, 'image/')) {
                 $fileType = FileTypeEnum::IMAGE;
             } elseif (str_starts_with($mimeType, 'video/')) {
@@ -104,24 +85,25 @@ class FileController extends Controller
                     $fileType = FileTypeEnum::FILE;
                 }
             }
-    
+
             $extension = $uploadedFile->getClientOriginalExtension();
             $originalName = $uploadedFile->getClientOriginalName();
-            
+
             // Check for duplicate file with same name and extension
             $existingFile = File::withTrashed()->where('user_id', $user->id)
                 ->where('name', $originalName)
+                ->where('parent_folder_id', $request->input('parent_folder_id'))
                 ->first();
-                
+
             if ($existingFile) {
                 return response()->json([
                     'message' => __('file_manage.duplicate_file', ['name' => $originalName]),
                     'error' => 'duplicate_file'
                 ], 422);
             }
-            
+
             $fileName = Str::random(40) . '.' . $extension;
-            
+
             $path = $uploadedFile->storeAs($user->id, $fileName, 'local');
 
             $file = File::create([
@@ -133,22 +115,144 @@ class FileController extends Controller
                 'collection_id' => $request->input('collection_id'),
                 'parent_folder_id' => $request->input('parent_folder_id'),
             ]);
-    
+
             ActivityLoggerService::logFileUpload(
                 $file->id,
                 $file->name,
                 $file->size
             );
-            
+
             $uploadedFiles[] = $file;
         }
-    
+
         return response()->json([
             'message' => __('file_manage.files_uploaded'),
             'files' => FileResource::collection($uploadedFiles)
         ], 201);
     }
-    
+
+    public function uploadChunk(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $plan = $user->plan;
+
+        $request->validate([
+            'file' => 'required|file',
+            'chunk_index' => 'required|integer',
+            'total_chunks' => 'required|integer',
+            'upload_id' => 'required|string',
+            'original_name' => 'required|string',
+            'collection_id' => 'nullable|exists:collections,id',
+            'parent_folder_id' => 'nullable|exists:files,id',
+        ]);
+
+        $file = $request->file('file');
+        $chunkIndex = $request->input('chunk_index');
+        $totalChunks = $request->input('total_chunks');
+        $uploadId = $request->input('upload_id');
+        $originalName = $request->input('original_name');
+
+        // Temporary directory for chunks
+        $tempDir = 'chunks/' . $user->id . '/' . $uploadId;
+
+        $file->storeAs($tempDir, "chunk_{$chunkIndex}");
+
+        $allChunksUploaded = true;
+        for ($i = 0; $i < $totalChunks; $i++) {
+            if (!Storage::exists("{$tempDir}/chunk_{$i}")) {
+                $allChunksUploaded = false;
+                break;
+            }
+        }
+
+        if ($allChunksUploaded) {
+            $finalPath = $user->id . '/' . Str::random(40) . '.' . pathinfo($originalName, PATHINFO_EXTENSION);
+            $fullFinalPath = Storage::path($finalPath);
+
+            Storage::makeDirectory(dirname($finalPath));
+
+            $outputFile = fopen($fullFinalPath, 'wb');
+
+            for ($i = 0; $i < $totalChunks; $i++) {
+                $chunkPath = Storage::path("{$tempDir}/chunk_{$i}");
+                $chunkFile = fopen($chunkPath, 'rb');
+                stream_copy_to_stream($chunkFile, $outputFile);
+                fclose($chunkFile);
+            }
+            fclose($outputFile);
+
+            Storage::deleteDirectory($tempDir);
+
+            $size = Storage::size($finalPath);
+
+            // Check storage limit
+            if (!$user->hasStorageSpace($size)) {
+                Storage::delete($finalPath);
+                $neededSpace = number_format(($user->storage_used_bytes + $size - $plan->storage_limit_bytes) / (1024 * 1024), 2);
+                return response()->json([
+                    'message' => __('file_manage.insufficient_storage', ['space' => $neededSpace]),
+                    'error' => 'storage_limit_exceeded'
+                ], 422);
+            }
+
+            $mimeType = Storage::mimeType($finalPath);
+            $fileType = FileTypeEnum::OTHER;
+            if (str_starts_with($mimeType, 'image/')) {
+                $fileType = FileTypeEnum::IMAGE;
+            } elseif (str_starts_with($mimeType, 'video/')) {
+                $fileType = FileTypeEnum::VIDEO;
+            } elseif (str_starts_with($mimeType, 'audio/')) {
+                $fileType = FileTypeEnum::AUDIO;
+            } else {
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                if (in_array($extension, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'])) {
+                    $fileType = FileTypeEnum::FILE;
+                }
+            }
+
+            // Check for duplicate
+            $existingFile = File::withTrashed()->where('user_id', $user->id)
+                ->where('name', $originalName)
+                ->where('parent_folder_id', $request->input('parent_folder_id'))
+                ->first();
+
+            if ($existingFile) {
+                Storage::delete($finalPath);
+                return response()->json([
+                    'message' => __('file_manage.duplicate_file', ['name' => $originalName]),
+                    'error' => 'duplicate_file'
+                ], 422);
+            }
+
+            $fileModel = File::create([
+                'user_id' => $user->id,
+                'name' => $originalName,
+                'type' => $fileType->value,
+                'size' => $size,
+                'path' => $finalPath,
+                'collection_id' => $request->input('collection_id'),
+                'parent_folder_id' => $request->input('parent_folder_id'),
+            ]);
+
+            ActivityLoggerService::logFileUpload(
+                $fileModel->id,
+                $fileModel->name,
+                $fileModel->size
+            );
+
+            return response()->json([
+                'message' => __('file_manage.files_uploaded'),
+                'file' => new FileResource($fileModel),
+                'completed' => true
+            ], 201);
+        }
+
+        return response()->json([
+            'message' => 'Chunk uploaded',
+            'completed' => false
+        ]);
+    }
+
 
 
 
@@ -161,9 +265,9 @@ class FileController extends Controller
         }
 
         $rules = [
-            'name'   => 'sometimes|string|max:255',
-            'trash'  => 'sometimes|boolean',
-            'file'   => 'sometimes|file|max:2097152',
+            'name' => 'sometimes|string|max:255',
+            'trash' => 'sometimes|boolean',
+            'file' => 'sometimes|file|max:2097152',
         ];
 
         $validatedData = $request->validate($rules);
@@ -312,7 +416,7 @@ class FileController extends Controller
                 'file_ids' => $ids,
                 'exception' => $e
             ]);
-            
+
             return response()->json([
                 'error' => __('file_manage.delete_error')
             ], 500);
@@ -366,47 +470,47 @@ class FileController extends Controller
             $zipService->cleanupZipFile($previousZipFile);
             session()->forget('last_zip_file');
         }
-    
+
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'integer',
         ]);
-    
+
         $ids = $validated['ids'];
         $userId = Auth::id();
-    
+
         $files = File::whereIn('id', $ids)->where('user_id', $userId)->get();
-        
+
         if ($files->isEmpty()) {
             return response()->json(['error' => __('file_manage.files_not_found')], 404);
         }
-    
+
         $zipFileName = $zipService->generateZipFileName();
         $zipPath = $zipService->getZipPath($zipFileName);
-    
+
         if (!$zipService->createZipFromFiles($files, $zipPath)) {
             return response()->json(['error' => __('file_manage.archive_creation_failed')], 500);
         }
-        
+
         if (!file_exists($zipPath)) {
             return response()->json(['error' => __('file_manage.archive_creation_failed')], 500);
         }
-        
+
         $zipSize = filesize($zipPath);
 
         ActivityLoggerService::logZipDownload($ids, $zipSize);
-    
+
         session(['last_zip_file' => $zipFileName]);
-    
+
         $downloadUrl = asset("storage/{$zipFileName}");
-    
+
         return response()->json([
             'download_url' => $downloadUrl
         ]);
     }
-    
 
-    
+
+
     public function search(Request $request)
     {
         $validated = $request->validate([

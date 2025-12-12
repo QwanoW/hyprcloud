@@ -17,7 +17,7 @@ class AnalyticsController extends Controller
     {
         $userId = Auth::id();
         
-        // Статистика по файлам
+        // File stats
         $fileStats = [
             'total_count' => File::where('user_id', $userId)->count(),
             'total_size' => File::where('user_id', $userId)->sum('size'),
@@ -32,7 +32,7 @@ class AnalyticsController extends Controller
             'trashed_size' => File::where('user_id', $userId)->onlyTrashed()->sum('size'),
         ];
         
-        // Активность пользователя за последние 30 дней
+        // User activity in the last 30 days
         $thirtyDaysAgo = Carbon::today()->subDays(29);
 
         $activityByDay = UserActivity::where('user_id', $userId)
@@ -48,7 +48,6 @@ class AnalyticsController extends Controller
             ->get()
             ->groupBy('date');
             
-        // Преобразуем данные для фронтенда
         $lastThirtyDays = collect(range(0, 29))->map(function ($day) use ($thirtyDaysAgo, $activityByDay) {
             $date = $thirtyDaysAgo->copy()->addDays($day)->format('Y-m-d');
             $activity = $activityByDay[$date] ?? collect();
@@ -67,7 +66,6 @@ class AnalyticsController extends Controller
             ];
         });
         
-        // Суммарная активность по типам
         $activitySummary = [
             'total_uploads' => UserActivity::where('user_id', $userId)->where('action_type', 'upload')->count(),
             'total_downloads' => UserActivity::where('user_id', $userId)
@@ -80,7 +78,6 @@ class AnalyticsController extends Controller
                 ->whereIn('action_type', ['download', 'zip_download'])->sum('size'),
         ];
         
-        // Последние действия
         $recentActivity = UserActivity::where('user_id', $userId)
             ->with(['user'])
             ->orderBy('created_at', 'desc')

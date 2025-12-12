@@ -217,11 +217,6 @@ export default function ShowFile({ fileId, file, breadcrumbPath = [] }: ShowFile
                                                 <Download className="mr-2 h-4 w-4" />
                                                 {t('file_manage.download')}
                                             </Button>
-
-                                            <Button onClick={handleShare} variant="secondary" size="lg" className="bg-accent hover:bg-accent/80">
-                                                <Share2 className="mr-2 h-4 w-4" />
-                                                {t('file_manage.action_menu_share')}
-                                            </Button>
                                             <FileDeleteDialog onConfirm={handleDelete}>
                                                 <Button
                                                     variant="destructive"
