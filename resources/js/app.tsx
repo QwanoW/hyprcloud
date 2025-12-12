@@ -15,13 +15,13 @@ declare global {
     const route: typeof routeFn;
 }
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Hyprcloud';
 const queryClient = new QueryClient();
 
 // get locale from local storage or navigator language
-const locale = typeof window !== 'undefined' 
-  ? localStorage.getItem('locale') || navigator.language?.split('-')[0] || 'en'
-  : 'en';
+const locale = typeof window !== 'undefined'
+    ? localStorage.getItem('locale') || navigator.language?.split('-')[0] || 'en'
+    : 'en';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
