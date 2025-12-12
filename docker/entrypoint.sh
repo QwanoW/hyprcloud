@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Deploying frontend assets..."
+cp -rf /var/www/tmp_build/. /var/www/html/public/build/
+
 if [ ! -f /var/www/html/storage/database.sqlite ]; then
     echo "Creating database.sqlite..."
     touch /var/www/html/storage/database.sqlite
