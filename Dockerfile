@@ -1,5 +1,8 @@
 # --- Stage 1: Build Frontend (Bun) ---
 FROM oven/bun:1-alpine AS frontend_build
+
+ARG VITE_APP_NAME=Hyprcloud
+
 WORKDIR /app
 COPY package.json bun.lockb* ./
 RUN bun install --frozen-lockfile

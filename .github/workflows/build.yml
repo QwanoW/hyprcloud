@@ -10,6 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  APP_NAME: Hyprcloud
 
 jobs:
   build-and-push:
@@ -52,3 +53,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            VITE_APP_NAME=${{ env.APP_NAME }}
+      - name: Trigger Dokploy Deployment
+        if: success()
+        run: curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
