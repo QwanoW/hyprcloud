@@ -57,4 +57,8 @@ jobs:
             VITE_APP_NAME=${{ env.APP_NAME }}
       - name: Trigger Dokploy Deployment
         if: success()
-        run: curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+        run: |
+          curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
+            -H "X-GitHub-Event: Deployment" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "refs/heads/main"}'
