@@ -2,6 +2,7 @@
 FROM oven/bun:1-alpine AS frontend_build
 
 ARG VITE_APP_NAME=Hyprcloud
+ENV VITE_APP_NAME=${VITE_APP_NAME}
 
 WORKDIR /app
 COPY package.json bun.lockb* ./
