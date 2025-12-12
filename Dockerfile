@@ -61,7 +61,7 @@ FROM base AS prod
 
 COPY ./docker/php/php.production.ini /usr/local/etc/php/conf.d/production.ini
 COPY . .
-COPY --from=frontend_build /app/public/build /var/www/tmp_build
+COPY --from=frontend_build /app/public /var/www/public_temp
 RUN rm -rf .git && \
     composer install --no-dev --optimize-autoloader --no-scripts
 RUN chown -R www-data:www-data /var/www/html \
