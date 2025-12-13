@@ -52,7 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('help', function () {
             return Inertia::render('dashboard/help/index');
         })->name('dashboard.help');
-        
+
         // Collections routes
         Route::get('collections', function () {
             return Inertia::render('dashboard/collections/index');
@@ -60,15 +60,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('collections/{collection}', function ($collection) {
             return Inertia::render('dashboard/collections/show', ['collectionId' => $collection]);
         })->name('dashboard.collections.show');
-        
-        // Folders routes
+
         Route::get('folders/{folder}', function ($folder) {
             return Inertia::render('dashboard/folders/index', ['folderId' => $folder]);
         })->name('folders.show');
+
+        Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
     });
 });
-
-Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
