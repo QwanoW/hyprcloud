@@ -25,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('files/download-zip', [FileController::class, 'downloadZip'])->name('files.downloadZip');
     Route::post('files/search', [FileController::class, 'search'])->name('files.search');
 
+    Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
+
     Route::controller(PlanController::class)->group(function () {
         Route::get('manage-plan', 'index')->name('manage-plan.index');
     });
@@ -65,7 +67,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('dashboard/folders/index', ['folderId' => $folder]);
         })->name('folders.show');
 
-        Route::get('files/{filepath}', [FileController::class, 'show'])->where('filepath', '.*')->name('files.show');
     });
 });
 
