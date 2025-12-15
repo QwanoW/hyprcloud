@@ -8,3 +8,5 @@
 /storage/*.key
 /bootstrap/cache/*.php
 /storage/database.sqlite
+README.md
+preview.gif
